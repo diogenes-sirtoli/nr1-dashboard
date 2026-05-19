@@ -6,11 +6,7 @@
     <title>Dashboard NR1 - Campanha WhatsApp</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #f0f2f5;
@@ -28,8 +24,25 @@
         .last-update {
             text-align: center;
             color: #666;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             font-size: 0.9em;
+        }
+        .nav-buttons {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .nav-buttons a {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .nav-buttons a:hover {
+            background: #0056b3;
         }
         .cards {
             display: grid;
@@ -110,11 +123,6 @@
             font-size: 1.2em;
             color: #555;
         }
-        .error {
-            color: red;
-            text-align: center;
-            padding: 50px;
-        }
         footer {
             text-align: center;
             margin-top: 30px;
@@ -127,6 +135,10 @@
 <div class="container">
     <h1>📊 Dashboard NR1 - Campanha WhatsApp</h1>
     <div id="last-update" class="last-update">Carregando...</div>
+
+    <div class="nav-buttons">
+        <a href="detalhes.html">📋 Ver detalhes (respostas SIM/NAO)</a>
+    </div>
 
     <div class="cards" id="cards">
         <div class="card"><h3>Total de Contatos</h3><div class="number">-</div></div>
@@ -151,9 +163,7 @@
     <div class="status-table">
         <h2>📲 Status das Mensagens (Agregado)</h2>
         <table id="statusTable">
-            <thead>
-                <tr><th>Status</th><th>Quantidade</th></tr>
-            </thead>
+            <thead><tr><th>Status</th><th>Quantidade</th></tr></thead>
             <tbody><tr><td colspan="2">Carregando...</td></tr></tbody>
         </table>
     </div>
@@ -169,19 +179,26 @@
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
 
+            // O resultado vem dentro da propriedade "resultado"
+            const resultado = data.resultado;
+
             // Atualizar data/hora
-            const atualizado = new Date(data.atualizado_em).toLocaleString('pt-BR');
+            const atualizado = new Date(resultado.atualizado_em).toLocaleString('pt-BR');
             document.getElementById('last-update').innerHTML = `Última atualização: ${atualizado}`;
 
-            // Cards
-            document.querySelectorAll('.card')[0].querySelector('.number').innerText = data.campanha.total;
-            document.querySelectorAll('.card')[1].querySelector('.number').innerText = data.campanha.respondeu_sim;
-            document.querySelectorAll('.card')[2].querySelector('.number').innerText = data.campanha.respondeu_nao;
-            document.querySelectorAll('.card')[3].querySelector('.number').innerText = data.campanha.sem_resposta;
-            document.querySelectorAll('.card')[4].querySelector('.number').innerText = data.campanha.enviados;
-            document.querySelectorAll('.card')[5].querySelector('.number').innerText = data.campanha.nao_enviados;
+            const campanha = resultado.campanha;
+            const status = resultado.status_mensagens;
 
-            // Gráfico de respostas (Sim, Não, Sem resposta)
+            // Cards
+            const cards = document.querySelectorAll('.card');
+            cards[0].querySelector('.number').innerText = campanha.total;
+            cards[1].querySelector('.number').innerText = campanha.respondeu_sim;
+            cards[2].querySelector('.number').innerText = campanha.respondeu_nao;
+            cards[3].querySelector('.number').innerText = campanha.sem_resposta;
+            cards[4].querySelector('.number').innerText = campanha.enviados;
+            cards[5].querySelector('.number').innerText = campanha.nao_enviados;
+
+            // Gráfico de respostas
             const ctxRespostas = document.getElementById('respostasChart').getContext('2d');
             new Chart(ctxRespostas, {
                 type: 'bar',
@@ -189,19 +206,16 @@
                     labels: ['✅ SIM', '❌ NÃO', '📭 Sem resposta'],
                     datasets: [{
                         label: 'Quantidade',
-                        data: [data.campanha.respondeu_sim, data.campanha.respondeu_nao, data.campanha.sem_resposta],
+                        data: [campanha.respondeu_sim, campanha.respondeu_nao, campanha.sem_resposta],
                         backgroundColor: ['#28a745', '#dc3545', '#ffc107'],
                         borderRadius: 6
                     }]
                 },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { position: 'top' } }
-                }
+                options: { responsive: true, plugins: { legend: { position: 'top' } } }
             });
 
             // Gráfico de tentativas
-            const tentativas = data.campanha.tentativas;
+            const tentativas = campanha.tentativas;
             const ctxTentativas = document.getElementById('tentativasChart').getContext('2d');
             new Chart(ctxTentativas, {
                 type: 'pie',
@@ -212,22 +226,17 @@
                         backgroundColor: ['#007bff', '#6c757d', '#28a745', '#fd7e14']
                     }]
                 },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { position: 'right' } }
-                }
+                options: { responsive: true, plugins: { legend: { position: 'right' } } }
             });
 
-            // Tabela de status mensagens
-            const statusMap = data.status_mensagens;
+            // Tabela de status
             const tableBody = document.querySelector('#statusTable tbody');
             tableBody.innerHTML = '';
-            for (const [status, total] of Object.entries(statusMap)) {
+            for (const [stat, total] of Object.entries(status)) {
                 const row = tableBody.insertRow();
-                row.insertCell(0).innerText = status;
+                row.insertCell(0).innerText = stat;
                 row.insertCell(1).innerText = total;
             }
-
         } catch (error) {
             document.getElementById('last-update').innerHTML = 'Erro ao carregar dados';
             console.error('Erro:', error);
