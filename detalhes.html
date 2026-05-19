@@ -35,8 +35,11 @@
         .nav-buttons {
             text-align: center;
             margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
         }
-        .nav-buttons a {
+        .nav-buttons a, .refresh-btn {
             display: inline-block;
             background: #6c757d;
             color: white;
@@ -45,6 +48,15 @@
             border-radius: 8px;
             font-weight: bold;
             transition: background 0.2s;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        .refresh-btn {
+            background: #28a745;
+        }
+        .refresh-btn:hover {
+            background: #1e7e34;
         }
         .nav-buttons a:hover {
             background: #5a6268;
@@ -120,6 +132,7 @@
             border-bottom: 2px solid #ddd;
             position: sticky;
             top: 0;
+            z-index: 10;
         }
         .table-header h2 {
             margin: 0;
@@ -148,6 +161,7 @@
             background-color: #f8f9fa;
             position: sticky;
             top: 60px;
+            z-index: 5;
         }
         .loading {
             text-align: center;
@@ -168,6 +182,7 @@
     <div id="last-update" class="last-update">Carregando dados...</div>
 
     <div class="nav-buttons">
+        <button class="refresh-btn" onclick="recarregarDados()">🔄 Atualizar dados</button>
         <a href="index.html">◀ Voltar ao resumo</a>
     </div>
 
@@ -195,17 +210,9 @@
             </div>
             <table id="tableSim">
                 <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>Telefone</th>
-                        <th>Cargo</th>
-                        <th>Empresa</th>
-                        <th>Respondido em</th>
-                    </tr>
+                    <tr><th>Nome</th><th>Telefone</th><th>Cargo</th><th>Empresa</th><th>Respondido em</th></tr>
                 </thead>
-                <tbody>
-                    <tr><td colspan="5" class="loading">Carregando...</td></tr>
-                </tbody>
+                <tbody><tr><td colspan="5" class="loading">Carregando...</td></tr></tbody>
             </table>
         </div>
         <div class="table-wrapper">
@@ -214,18 +221,8 @@
                 <span id="naoCount" class="pill">0</span>
             </div>
             <table id="tableNao">
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>Telefone</th>
-                        <th>Cargo</th>
-                        <th>Empresa</th>
-                        <th>Respondido em</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td colspan="5" class="loading">Carregando...</td></tr>
-                </tbody>
+                <thead><tr><th>Nome</th><th>Telefone</th><th>Cargo</th><th>Empresa</th><th>Respondido em</th></tr></thead>
+                <tbody><tr><td colspan="5" class="loading">Carregando...</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -234,11 +231,7 @@
 
 <script>
     const API_URL = 'https://testes-api-n8n-dev.nicehill-2119d736.brazilsouth.azurecontainerapps.io/webhook/nr1-dashboard-data';
-
-    let dadosCompletos = {
-        lista_sim: [],
-        lista_nao: []
-    };
+    let dadosCompletos = { lista_sim: [], lista_nao: [] };
     let dadosCarregados = false;
 
     async function carregarDados() {
@@ -247,14 +240,11 @@
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
             const resultado = data.resultado;
-
             dadosCompletos.lista_sim = resultado.lista_sim || [];
             dadosCompletos.lista_nao = resultado.lista_nao || [];
             dadosCarregados = true;
-
             const atualizado = new Date().toLocaleString('pt-BR');
             document.getElementById('last-update').innerHTML = `Última atualização: ${atualizado}`;
-
             aplicarFiltro(null, null);
         } catch (error) {
             document.getElementById('last-update').innerHTML = 'Erro ao carregar dados';
@@ -262,23 +252,24 @@
         }
     }
 
+    function recarregarDados() {
+        dadosCarregados = false;
+        document.getElementById('last-update').innerHTML = 'Atualizando...';
+        carregarDados();
+    }
+
     function aplicarFiltro(startDate, endDate) {
         if (!dadosCarregados) return;
-
         const simFiltrados = filtrarPorData(dadosCompletos.lista_sim, startDate, endDate);
         const naoFiltrados = filtrarPorData(dadosCompletos.lista_nao, startDate, endDate);
-
         renderizarTabela('tableSim', simFiltrados);
         renderizarTabela('tableNao', naoFiltrados);
-
-        // Atualiza contadores
         document.getElementById('simCount').innerText = simFiltrados.length;
         document.getElementById('naoCount').innerText = naoFiltrados.length;
     }
 
     function filtrarPorData(lista, start, end) {
         if (!start && !end) return lista;
-
         return lista.filter(item => {
             if (!item.respondido_em) return false;
             const data = new Date(item.respondido_em);
@@ -291,24 +282,20 @@
     function renderizarTabela(tableId, dados) {
         const tbody = document.querySelector(`#${tableId} tbody`);
         if (!tbody) return;
-
         if (dados.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5">Nenhum registro neste período.</td></tr>';
             return;
         }
-
         let html = '';
         for (let item of dados) {
             const dataRespondido = item.respondido_em ? new Date(item.respondido_em).toLocaleString('pt-BR') : '-';
-            html += `
-                <tr>
-                    <td>${escapeHtml(item.nome || '-')}</td>
-                    <td>${escapeHtml(item.telefone || '-')}</td>
-                    <td>${escapeHtml(item.cargo || '-')}</td>
-                    <td>${escapeHtml(item.empresa || '-')}</td>
-                    <td>${dataRespondido}</td>
-                </tr>
-            `;
+            html += `<tr>
+                <td>${escapeHtml(item.nome || '-')}</td>
+                <td>${escapeHtml(item.telefone || '-')}</td>
+                <td>${escapeHtml(item.cargo || '-')}</td>
+                <td>${escapeHtml(item.empresa || '-')}</td>
+                <td>${dataRespondido}</td>
+            </tr>`;
         }
         tbody.innerHTML = html;
     }
@@ -324,32 +311,14 @@
     }
 
     function setQuickFilter(tipo) {
-        let start = null;
-        let end = new Date();
-        end.setHours(23, 59, 59, 999);
-
+        let start = null, end = new Date(); end.setHours(23,59,59,999);
         const now = new Date();
-        if (tipo === '24h') {
-            start = new Date();
-            start.setDate(now.getDate() - 1);
-            start.setHours(0, 0, 0, 0);
-        } else if (tipo === '5d') {
-            start = new Date();
-            start.setDate(now.getDate() - 5);
-            start.setHours(0, 0, 0, 0);
-        } else if (tipo === '7d') {
-            start = new Date();
-            start.setDate(now.getDate() - 7);
-            start.setHours(0, 0, 0, 0);
-        } else if (tipo === '30d') {
-            start = new Date();
-            start.setDate(now.getDate() - 30);
-            start.setHours(0, 0, 0, 0);
-        }
-
+        if (tipo === '24h') { start = new Date(); start.setDate(now.getDate()-1); start.setHours(0,0,0,0); }
+        else if (tipo === '5d') { start = new Date(); start.setDate(now.getDate()-5); start.setHours(0,0,0,0); }
+        else if (tipo === '7d') { start = new Date(); start.setDate(now.getDate()-7); start.setHours(0,0,0,0); }
+        else if (tipo === '30d') { start = new Date(); start.setDate(now.getDate()-30); start.setHours(0,0,0,0); }
         if (start) document.getElementById('startDate').value = start.toISOString().split('T')[0];
         document.getElementById('endDate').value = end.toISOString().split('T')[0];
-
         aplicarFiltro(start, end);
     }
 
@@ -362,10 +331,8 @@
     function applyCustomFilter() {
         let start = document.getElementById('startDate').value;
         let end = document.getElementById('endDate').value;
-
         let startDate = start ? new Date(start + 'T00:00:00') : null;
         let endDate = end ? new Date(end + 'T23:59:59') : null;
-
         aplicarFiltro(startDate, endDate);
     }
 
