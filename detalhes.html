@@ -109,16 +109,31 @@
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             overflow: auto;
-            max-height: 500px;
+            max-height: 600px;
         }
-        .table-wrapper h2 {
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-bottom: 2px solid #ddd;
             position: sticky;
             top: 0;
-            background: white;
-            padding: 15px;
+        }
+        .table-header h2 {
             margin: 0;
-            border-bottom: 2px solid #ddd;
             font-size: 1.2em;
+            border-left: none;
+            padding-left: 0;
+        }
+        .pill {
+            background-color: #007bff;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.8em;
+            font-weight: bold;
         }
         table {
             width: 100%;
@@ -132,7 +147,7 @@
         th {
             background-color: #f8f9fa;
             position: sticky;
-            top: 50px;
+            top: 60px;
         }
         .loading {
             text-align: center;
@@ -174,7 +189,10 @@
 
     <div class="tables-container">
         <div class="table-wrapper">
-            <h2>✅ Responderam SIM</h2>
+            <div class="table-header">
+                <h2>✅ Responderam SIM</h2>
+                <span id="simCount" class="pill">0</span>
+            </div>
             <table id="tableSim">
                 <thead>
                     <tr>
@@ -191,7 +209,10 @@
             </table>
         </div>
         <div class="table-wrapper">
-            <h2>❌ Responderam NÃO</h2>
+            <div class="table-header">
+                <h2>❌ Responderam NÃO</h2>
+                <span id="naoCount" class="pill">0</span>
+            </div>
             <table id="tableNao">
                 <thead>
                     <tr>
@@ -234,7 +255,6 @@
             const atualizado = new Date().toLocaleString('pt-BR');
             document.getElementById('last-update').innerHTML = `Última atualização: ${atualizado}`;
 
-            // Aplica filtro inicial (sem filtro)
             aplicarFiltro(null, null);
         } catch (error) {
             document.getElementById('last-update').innerHTML = 'Erro ao carregar dados';
@@ -250,6 +270,10 @@
 
         renderizarTabela('tableSim', simFiltrados);
         renderizarTabela('tableNao', naoFiltrados);
+
+        // Atualiza contadores
+        document.getElementById('simCount').innerText = simFiltrados.length;
+        document.getElementById('naoCount').innerText = naoFiltrados.length;
     }
 
     function filtrarPorData(lista, start, end) {
@@ -299,7 +323,6 @@
         });
     }
 
-    // Filtros rápidos
     function setQuickFilter(tipo) {
         let start = null;
         let end = new Date();
