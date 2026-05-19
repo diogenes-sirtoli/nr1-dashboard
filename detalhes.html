@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NR1 - Detalhes das Respostas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #1a1a2e;
+        }
+        h1 {
+            margin-bottom: 10px;
+        }
+        .last-update {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+        .nav-buttons {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .nav-buttons a {
+            display: inline-block;
+            background: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .nav-buttons a:hover {
+            background: #5a6268;
+        }
+        .filtro-box {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .filtro-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .filtro-buttons button {
+            padding: 8px 16px;
+            background: #e9ecef;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .filtro-buttons button:hover {
+            background: #007bff;
+            color: white;
+        }
+        .custom-range {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+        }
+        .custom-range input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        .custom-range button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .tables-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+        .table-wrapper {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: auto;
+            max-height: 500px;
+        }
+        .table-wrapper h2 {
+            position: sticky;
+            top: 0;
+            background: white;
+            padding: 15px;
+            margin: 0;
+            border-bottom: 2px solid #ddd;
+            font-size: 1.2em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background-color: #f8f9fa;
+            position: sticky;
+            top: 50px;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #555;
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.8em;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📋 Detalhamento das Respostas</h1>
+    <div id="last-update" class="last-update">Carregando dados...</div>
+
+    <div class="nav-buttons">
+        <a href="index.html">◀ Voltar ao resumo</a>
+    </div>
+
+    <div class="filtro-box">
+        <div class="filtro-buttons">
+            <button onclick="setQuickFilter('24h')">📅 Últimas 24h</button>
+            <button onclick="setQuickFilter('5d')">📅 Últimos 5 dias</button>
+            <button onclick="setQuickFilter('7d')">📅 Última semana</button>
+            <button onclick="setQuickFilter('30d')">📅 Último mês</button>
+            <button onclick="clearFilter()">🗑️ Limpar filtro</button>
+        </div>
+        <div class="custom-range">
+            <input type="date" id="startDate">
+            <span>até</span>
+            <input type="date" id="endDate">
+            <button onclick="applyCustomFilter()">Aplicar período</button>
+        </div>
+    </div>
+
+    <div class="tables-container">
+        <div class="table-wrapper">
+            <h2>✅ Responderam SIM</h2>
+            <table id="tableSim">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Telefone</th>
+                        <th>Cargo</th>
+                        <th>Empresa</th>
+                        <th>Respondido em</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="5" class="loading">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="table-wrapper">
+            <h2>❌ Responderam NÃO</h2>
+            <table id="tableNao">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Telefone</th>
+                        <th>Cargo</th>
+                        <th>Empresa</th>
+                        <th>Respondido em</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="5" class="loading">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <footer>Dados atualizados a cada acesso | Filtro aplicado localmente no navegador</footer>
+</div>
+
+<script>
+    const API_URL = 'https://testes-api-n8n-dev.nicehill-2119d736.brazilsouth.azurecontainerapps.io/webhook/nr1-dashboard-data';
+
+    let dadosCompletos = {
+        lista_sim: [],
+        lista_nao: []
+    };
+    let dadosCarregados = false;
+
+    async function carregarDados() {
+        try {
+            const response = await fetch(API_URL);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            const resultado = data.resultado;
+
+            dadosCompletos.lista_sim = resultado.lista_sim || [];
+            dadosCompletos.lista_nao = resultado.lista_nao || [];
+            dadosCarregados = true;
+
+            const atualizado = new Date().toLocaleString('pt-BR');
+            document.getElementById('last-update').innerHTML = `Última atualização: ${atualizado}`;
+
+            // Aplica filtro inicial (sem filtro)
+            aplicarFiltro(null, null);
+        } catch (error) {
+            document.getElementById('last-update').innerHTML = 'Erro ao carregar dados';
+            console.error('Erro:', error);
+        }
+    }
+
+    function aplicarFiltro(startDate, endDate) {
+        if (!dadosCarregados) return;
+
+        const simFiltrados = filtrarPorData(dadosCompletos.lista_sim, startDate, endDate);
+        const naoFiltrados = filtrarPorData(dadosCompletos.lista_nao, startDate, endDate);
+
+        renderizarTabela('tableSim', simFiltrados);
+        renderizarTabela('tableNao', naoFiltrados);
+    }
+
+    function filtrarPorData(lista, start, end) {
+        if (!start && !end) return lista;
+
+        return lista.filter(item => {
+            if (!item.respondido_em) return false;
+            const data = new Date(item.respondido_em);
+            if (start && data < start) return false;
+            if (end && data > end) return false;
+            return true;
+        });
+    }
+
+    function renderizarTabela(tableId, dados) {
+        const tbody = document.querySelector(`#${tableId} tbody`);
+        if (!tbody) return;
+
+        if (dados.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5">Nenhum registro neste período.</td></tr>';
+            return;
+        }
+
+        let html = '';
+        for (let item of dados) {
+            const dataRespondido = item.respondido_em ? new Date(item.respondido_em).toLocaleString('pt-BR') : '-';
+            html += `
+                <tr>
+                    <td>${escapeHtml(item.nome || '-')}</td>
+                    <td>${escapeHtml(item.telefone || '-')}</td>
+                    <td>${escapeHtml(item.cargo || '-')}</td>
+                    <td>${escapeHtml(item.empresa || '-')}</td>
+                    <td>${dataRespondido}</td>
+                </tr>
+            `;
+        }
+        tbody.innerHTML = html;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // Filtros rápidos
+    function setQuickFilter(tipo) {
+        let start = null;
+        let end = new Date();
+        end.setHours(23, 59, 59, 999);
+
+        const now = new Date();
+        if (tipo === '24h') {
+            start = new Date();
+            start.setDate(now.getDate() - 1);
+            start.setHours(0, 0, 0, 0);
+        } else if (tipo === '5d') {
+            start = new Date();
+            start.setDate(now.getDate() - 5);
+            start.setHours(0, 0, 0, 0);
+        } else if (tipo === '7d') {
+            start = new Date();
+            start.setDate(now.getDate() - 7);
+            start.setHours(0, 0, 0, 0);
+        } else if (tipo === '30d') {
+            start = new Date();
+            start.setDate(now.getDate() - 30);
+            start.setHours(0, 0, 0, 0);
+        }
+
+        if (start) document.getElementById('startDate').value = start.toISOString().split('T')[0];
+        document.getElementById('endDate').value = end.toISOString().split('T')[0];
+
+        aplicarFiltro(start, end);
+    }
+
+    function clearFilter() {
+        document.getElementById('startDate').value = '';
+        document.getElementById('endDate').value = '';
+        aplicarFiltro(null, null);
+    }
+
+    function applyCustomFilter() {
+        let start = document.getElementById('startDate').value;
+        let end = document.getElementById('endDate').value;
+
+        let startDate = start ? new Date(start + 'T00:00:00') : null;
+        let endDate = end ? new Date(end + 'T23:59:59') : null;
+
+        aplicarFiltro(startDate, endDate);
+    }
+
+    carregarDados();
+</script>
+</body>
+</html>
