@@ -5,41 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NR1 - Detalhes das Respostas</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #f0f2f5;
             padding: 20px;
         }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        h1, h2 {
-            text-align: center;
-            color: #1a1a2e;
-        }
-        h1 {
-            margin-bottom: 10px;
-        }
-        .last-update {
-            text-align: center;
-            color: #666;
-            margin-bottom: 20px;
-            font-size: 0.9em;
-        }
-        .nav-buttons {
-            text-align: center;
-            margin-bottom: 30px;
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-        }
-        .nav-buttons a, .refresh-btn {
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { text-align: center; color: #1a1a2e; margin-bottom: 10px; }
+        .last-update { text-align: center; color: #666; margin-bottom: 20px; font-size: 0.9em; }
+        .nav-buttons, .refresh-buttons { text-align: center; margin-bottom: 20px; }
+        .nav-buttons a, .refresh-buttons button {
             display: inline-block;
             background: #6c757d;
             color: white;
@@ -52,15 +28,7 @@
             cursor: pointer;
             font-size: 1em;
         }
-        .refresh-btn {
-            background: #28a745;
-        }
-        .refresh-btn:hover {
-            background: #1e7e34;
-        }
-        .nav-buttons a:hover {
-            background: #5a6268;
-        }
+        .nav-buttons a:hover, .refresh-buttons button:hover { background: #5a6268; }
         .filtro-box {
             background: white;
             padding: 20px;
@@ -85,10 +53,7 @@
             font-weight: 500;
             transition: all 0.2s;
         }
-        .filtro-buttons button:hover {
-            background: #007bff;
-            color: white;
-        }
+        .filtro-buttons button:hover { background: #007bff; color: white; }
         .custom-range {
             display: flex;
             flex-wrap: wrap;
@@ -96,11 +61,7 @@
             justify-content: center;
             align-items: center;
         }
-        .custom-range input {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-        }
+        .custom-range input { padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
         .custom-range button {
             background: #28a745;
             color: white;
@@ -132,14 +93,8 @@
             border-bottom: 2px solid #ddd;
             position: sticky;
             top: 0;
-            z-index: 10;
         }
-        .table-header h2 {
-            margin: 0;
-            font-size: 1.2em;
-            border-left: none;
-            padding-left: 0;
-        }
+        .table-header h2 { margin: 0; font-size: 1.2em; }
         .pill {
             background-color: #007bff;
             color: white;
@@ -148,32 +103,11 @@
             font-size: 0.8em;
             font-weight: bold;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            text-align: left;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        th {
-            background-color: #f8f9fa;
-            position: sticky;
-            top: 60px;
-            z-index: 5;
-        }
-        .loading {
-            text-align: center;
-            padding: 50px;
-            color: #555;
-        }
-        footer {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 0.8em;
-            color: #888;
-        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; position: sticky; top: 60px; }
+        .loading { text-align: center; padding: 50px; color: #555; }
+        footer { text-align: center; margin-top: 30px; font-size: 0.8em; color: #888; }
     </style>
 </head>
 <body>
@@ -182,8 +116,10 @@
     <div id="last-update" class="last-update">Carregando dados...</div>
 
     <div class="nav-buttons">
-        <button class="refresh-btn" onclick="recarregarDados()">🔄 Atualizar dados</button>
         <a href="index.html">◀ Voltar ao resumo</a>
+    </div>
+    <div class="refresh-buttons">
+        <button id="refreshBtn">🔄 Atualizar dados</button>
     </div>
 
     <div class="filtro-box">
@@ -209,9 +145,7 @@
                 <span id="simCount" class="pill">0</span>
             </div>
             <table id="tableSim">
-                <thead>
-                    <tr><th>Nome</th><th>Telefone</th><th>Cargo</th><th>Empresa</th><th>Respondido em</th></tr>
-                </thead>
+                <thead><tr><th>Nome</th><th>Telefone</th><th>Cargo</th><th>Empresa</th><th>Respondido em</th></tr></thead>
                 <tbody><tr><td colspan="5" class="loading">Carregando...</td></tr></tbody>
             </table>
         </div>
@@ -231,8 +165,10 @@
 
 <script>
     const API_URL = 'https://testes-api-n8n-dev.nicehill-2119d736.brazilsouth.azurecontainerapps.io/webhook/nr1-dashboard-data';
+
     let dadosCompletos = { lista_sim: [], lista_nao: [] };
     let dadosCarregados = false;
+    let currentStartDate = null, currentEndDate = null; // guardar filtro atual
 
     async function carregarDados() {
         try {
@@ -240,30 +176,33 @@
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
             const resultado = data.resultado;
+
             dadosCompletos.lista_sim = resultado.lista_sim || [];
             dadosCompletos.lista_nao = resultado.lista_nao || [];
             dadosCarregados = true;
+
             const atualizado = new Date().toLocaleString('pt-BR');
             document.getElementById('last-update').innerHTML = `Última atualização: ${atualizado}`;
-            aplicarFiltro(null, null);
+
+            // reaplicar o filtro atual (se houver)
+            aplicarFiltro(currentStartDate, currentEndDate);
         } catch (error) {
             document.getElementById('last-update').innerHTML = 'Erro ao carregar dados';
             console.error('Erro:', error);
         }
     }
 
-    function recarregarDados() {
-        dadosCarregados = false;
-        document.getElementById('last-update').innerHTML = 'Atualizando...';
-        carregarDados();
-    }
-
     function aplicarFiltro(startDate, endDate) {
         if (!dadosCarregados) return;
+        currentStartDate = startDate;
+        currentEndDate = endDate;
+
         const simFiltrados = filtrarPorData(dadosCompletos.lista_sim, startDate, endDate);
         const naoFiltrados = filtrarPorData(dadosCompletos.lista_nao, startDate, endDate);
+
         renderizarTabela('tableSim', simFiltrados);
         renderizarTabela('tableNao', naoFiltrados);
+
         document.getElementById('simCount').innerText = simFiltrados.length;
         document.getElementById('naoCount').innerText = naoFiltrados.length;
     }
@@ -289,34 +228,32 @@
         let html = '';
         for (let item of dados) {
             const dataRespondido = item.respondido_em ? new Date(item.respondido_em).toLocaleString('pt-BR') : '-';
-            html += `<tr>
-                <td>${escapeHtml(item.nome || '-')}</td>
-                <td>${escapeHtml(item.telefone || '-')}</td>
-                <td>${escapeHtml(item.cargo || '-')}</td>
-                <td>${escapeHtml(item.empresa || '-')}</td>
-                <td>${dataRespondido}</td>
-            </tr>`;
+            html += `
+                <tr>
+                    <td>${escapeHtml(item.nome || '-')}</td>
+                    <td>${escapeHtml(item.telefone || '-')}</td>
+                    <td>${escapeHtml(item.cargo || '-')}</td>
+                    <td>${escapeHtml(item.empresa || '-')}</td>
+                    <td>${dataRespondido}</td>
+                </tr>
+            `;
         }
         tbody.innerHTML = html;
     }
 
     function escapeHtml(str) {
         if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
+        return str.replace(/[&<>]/g, m => (m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;')));
     }
 
     function setQuickFilter(tipo) {
-        let start = null, end = new Date(); end.setHours(23,59,59,999);
+        let start = null, end = new Date();
+        end.setHours(23, 59, 59, 999);
         const now = new Date();
-        if (tipo === '24h') { start = new Date(); start.setDate(now.getDate()-1); start.setHours(0,0,0,0); }
-        else if (tipo === '5d') { start = new Date(); start.setDate(now.getDate()-5); start.setHours(0,0,0,0); }
-        else if (tipo === '7d') { start = new Date(); start.setDate(now.getDate()-7); start.setHours(0,0,0,0); }
-        else if (tipo === '30d') { start = new Date(); start.setDate(now.getDate()-30); start.setHours(0,0,0,0); }
+        if (tipo === '24h') { start = new Date(); start.setDate(now.getDate() - 1); start.setHours(0,0,0,0); }
+        else if (tipo === '5d') { start = new Date(); start.setDate(now.getDate() - 5); start.setHours(0,0,0,0); }
+        else if (tipo === '7d') { start = new Date(); start.setDate(now.getDate() - 7); start.setHours(0,0,0,0); }
+        else if (tipo === '30d') { start = new Date(); start.setDate(now.getDate() - 30); start.setHours(0,0,0,0); }
         if (start) document.getElementById('startDate').value = start.toISOString().split('T')[0];
         document.getElementById('endDate').value = end.toISOString().split('T')[0];
         aplicarFiltro(start, end);
@@ -336,6 +273,7 @@
         aplicarFiltro(startDate, endDate);
     }
 
+    document.getElementById('refreshBtn').addEventListener('click', () => carregarDados());
     carregarDados();
 </script>
 </body>
