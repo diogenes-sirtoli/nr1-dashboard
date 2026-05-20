@@ -29,11 +29,90 @@
         th, td { text-align: left; padding: 10px; border-bottom: 1px solid #eee; }
         th { background-color: #f8f9fa; position: sticky; top: 60px; }
         .loading { text-align: center; padding: 50px; color: #555; }
-        .error-code { font-family: monospace; font-weight: bold; }
+        .error-code, .error-message {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .error-code:hover, .error-message:hover {
+            background-color: #fff3cd;
+            text-decoration: underline;
+        }
         .tel-button { display: inline-block; background-color: #25D366; color: white !important; padding: 5px 12px; border-radius: 20px; font-size: 0.85em; font-weight: bold; text-decoration: none; transition: background-color 0.2s, transform 0.1s; border: none; cursor: pointer; }
         .tel-button:hover { background-color: #128C7E; text-decoration: none; transform: scale(1.02); }
         .tel-button:active { transform: scale(0.98); }
         footer { text-align: center; margin-top: 30px; font-size: 0.8em; color: #888; }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: white;
+            margin: auto;
+            padding: 25px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 550px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            animation: fadeIn 0.2s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+        }
+        .modal-header h3 {
+            color: #dc3545;
+            margin: 0;
+        }
+        .close-modal {
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #aaa;
+            transition: color 0.2s;
+        }
+        .close-modal:hover {
+            color: #333;
+        }
+        .modal-body p {
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        .modal-body strong {
+            color: #007bff;
+        }
+        .modal-footer {
+            margin-top: 20px;
+            text-align: right;
+        }
+        .modal-footer button {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .modal-footer button:hover {
+            background: #5a6268;
+        }
     </style>
 </head>
 <body>
@@ -91,7 +170,23 @@
             </tbody>
         </table>
     </div>
-    <footer>Falhas registradas a partir dos webhooks do WhatsApp | Filtro local</footer>
+    <footer>Falhas registradas a partir dos webhooks do WhatsApp | Clique no código ou mensagem de erro para ver explicação.</footer>
+</div>
+
+<!-- Modal -->
+<div id="errorModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Detalhes do Erro</h3>
+            <span class="close-modal">&times;</span>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <p>Carregando explicação...</p>
+        </div>
+        <div class="modal-footer">
+            <button id="closeModalBtn">Fechar</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -101,16 +196,87 @@
     let dadosCarregados = false;
     let currentStartDate = null, currentEndDate = null;
 
-    // Função para normalizar telefone brasileiro para 13 dígitos (inserindo 9 quando necessário)
+    // Dicionário de explicações para códigos de erro comuns
+    const explicacoesErros = {
+        "131049": {
+            titulo: "Código 131049 - Limite de marketing atingido",
+            explicacao: `<p><strong>Esta mensagem significa:</strong><br>
+            O destinatário recebeu muitas mensagens de <strong>marketing</strong> (categoria “marketing”) nos últimos dias e o WhatsApp bloqueou temporariamente o envio para manter uma boa experiência do usuário.</p>
+            <p><strong>O que fazer:</strong><br>
+            • <strong>Não reenvie imediatamente</strong> – espere pelo menos 24 horas.<br>
+            • Considere usar templates de <strong>utilidade</strong> (confirmações, avisos) que não sofrem esse limite.<br>
+            • Se o erro persistir, este contato pode estar saturado – remova-o da sua lista de marketing por um tempo.</p>
+            <p><strong>Isso bloqueia minha conta?</strong><br>
+            <span style="color:#28a745;">❌ Não.</span> Apenas aquele destinatário está temporariamente restrito. Sua conta permanece ativa.</p>`
+        },
+        "131026": {
+            titulo: "Código 131026 - Mensagem não entregue (indisponível)",
+            explicacao: `<p><strong>Esta mensagem significa:</strong><br>
+            O número do destinatário pode estar inativo, não possui conta no WhatsApp ou o app está desatualizado. Também pode ocorrer quando o usuário desinstalou o aplicativo.</p>
+            <p><strong>O que fazer:</strong><br>
+            • Verifique se o número está correto.<br>
+            • Tente enviar novamente após alguns dias; o usuário pode retornar ao WhatsApp.<br>
+            • Considere remover da lista se o erro persistir por semanas.</p>`
+        },
+        "130429": {
+            titulo: "Código 130429 - Rate limit excedido",
+            explicacao: `<p><strong>Esta mensagem significa:</strong><br>
+            Você está tentando enviar mensagens muito rápido para o mesmo número ou para muitos números em curto intervalo.</p>
+            <p><strong>O que fazer:</strong><br>
+            • Reduza a velocidade de envio (use filas).<br>
+            • Implemente um espaçamento de pelo menos 1–2 segundos entre mensagens.<br>
+            • Respeite os limites de taxa da API (rate limits).</p>`
+        },
+        "130497": {
+            titulo: "Código 130497 - Restrição regional",
+            explicacao: `<p><strong>Esta mensagem significa:</strong><br>
+            O envio para o país do destinatário não é permitido com o número de telefone que você está usando (ex: enviar do Brasil para os EUA sem critérios de elegibilidade).</p>
+            <p><strong>O que fazer:</strong><br>
+            • Use um número de telefone registrado no país onde você tem autorização.<br>
+            • Verifique as políticas de envio internacionais da Meta.</p>`
+        },
+        "131031": {
+            titulo: "Código 131031 - Conta bloqueada ou restrita",
+            explicacao: `<p><strong>Esta mensagem significa:</strong><br>
+            A própria conta do WhatsApp Business (WABA) ou o número de telefone associado está bloqueado.</p>
+            <p><strong>O que fazer:</strong><br>
+            • Entre em contato com o suporte da Meta.<br>
+            • Verifique se houve violação de políticas (spam, queixas, etc.).<br>
+            • Revise suas práticas de envio para garantir conformidade.</p>`
+        }
+    };
+
+    function explicacaoGenerica(codigo, mensagem) {
+        return `<p><strong>Código ${codigo}</strong> - ${mensagem}</p>
+        <p>Este erro não possui uma explicação específica no nosso dicionário. Consulte a documentação da Meta WhatsApp Business API ou entre em contato com o suporte.</p>`;
+    }
+
+    function mostrarModal(codigo, mensagem) {
+        const modal = document.getElementById('errorModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        
+        const codigoStr = String(codigo);
+        const explicacao = explicacoesErros[codigoStr];
+        
+        if (explicacao) {
+            modalTitle.innerText = explicacao.titulo;
+            modalBody.innerHTML = explicacao.explicacao;
+        } else {
+            modalTitle.innerText = `Código ${codigoStr} - Detalhes`;
+            modalBody.innerHTML = explicacaoGenerica(codigoStr, mensagem);
+        }
+        
+        modal.style.display = 'flex';
+    }
+
     function normalizarTelefone(telefone) {
         if (!telefone) return '';
         let numeros = String(telefone).replace(/\D/g, '');
-        // Se tiver 12 dígitos, assume que falta o 9 após o DDD (55+DDD)
         if (numeros.length === 12) {
-            // Formato esperado: 55 + DDD (2 dígitos) + 8 dígitos -> insere 9 após o DDD
-            let ddi = numeros.slice(0, 2);      // 55
-            let ddd = numeros.slice(2, 4);      // ex: 83
-            let resto = numeros.slice(4, 12);   // 8 dígitos
+            let ddi = numeros.slice(0, 2);
+            let ddd = numeros.slice(2, 4);
+            let resto = numeros.slice(4, 12);
             return ddi + ddd + '9' + resto;
         }
         return numeros;
@@ -179,11 +345,10 @@
             const nomeExibido = formatarPrimeiroNome(item.nome);
             let telefoneOriginal = item.telefone ? String(item.telefone) : '';
             let telefoneNormalizado = normalizarTelefone(telefoneOriginal);
-            let telefoneLimpo = telefoneNormalizado; // já está sem caracteres especiais
+            let telefoneLimpo = telefoneNormalizado;
             const mensagem = `Oi ${nomeExibido !== 'Não identificado' ? nomeExibido : 'cliente'}, tudo bem?`;
             const mensagemCodificada = encodeURIComponent(mensagem);
             const linkWhatsApp = telefoneLimpo ? `https://wa.me/${telefoneLimpo}?text=${mensagemCodificada}` : '#';
-            // Exibe o telefone já normalizado (com 13 dígitos) para facilitar a identificação
             const telefoneExibicao = telefoneLimpo || telefoneOriginal || '-';
             const telefoneHtml = telefoneLimpo 
                 ? `<a href="${linkWhatsApp}" target="_blank" rel="noopener noreferrer" class="tel-button">${escapeHtml(telefoneExibicao)}</a>`
@@ -201,13 +366,14 @@
             const codigoErro = (item.codigo_erro !== null && item.codigo_erro !== undefined) ? escapeHtml(item.codigo_erro) : '-';
             const mensagemErro = item.mensagem_erro ? escapeHtml(item.mensagem_erro) : '-';
             
+            // Adiciona classes para abrir modal
             html += `
                 <tr>
                     <td>${escapeHtml(nomeExibido)}</td>
                     <td>${telefoneHtml}</td>
                     <td>${dataHora}</td>
-                    <td class="error-code">${codigoErro}</td>
-                    <td>${mensagemErro}</td>
+                    <td class="error-code" onclick="mostrarModal(${escapeHtml(codigoErro)}, '${escapeHtml(mensagemErro)}')">${codigoErro}</td>
+                    <td class="error-message" onclick="mostrarModal(${escapeHtml(codigoErro)}, '${escapeHtml(mensagemErro)}')">${mensagemErro}</td>
                 </tr>
             `;
         }
@@ -240,6 +406,23 @@
         let endDate = end ? new Date(end + 'T23:59:59') : null;
         aplicarFiltro(startDate, endDate);
     }
+
+    // Modal listeners
+    const modal = document.getElementById('errorModal');
+    const closeSpan = document.querySelector('.close-modal');
+    const closeBtn = document.getElementById('closeModalBtn');
+
+    function fecharModal() {
+        modal.style.display = 'none';
+    }
+
+    closeSpan.onclick = fecharModal;
+    closeBtn.onclick = fecharModal;
+    window.onclick = function(event) {
+        if (event.target === modal) {
+            fecharModal();
+        }
+    };
 
     document.getElementById('refreshBtn').addEventListener('click', () => carregarDados());
     carregarDados();
