@@ -5,22 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NR1 - Detalhes das Respostas</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #f0f2f5;
             padding: 20px;
         }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+        .container { max-width: 1400px; margin: 0 auto; }
 
-        /* Cabeçalho flexível com título centralizado e botões laterais */
         .header-flex {
             display: flex;
             align-items: center;
@@ -29,16 +21,8 @@
             margin-bottom: 10px;
             gap: 15px;
         }
-        .header-flex h1 {
-            margin: 0;
-            flex: 1;
-            text-align: center;
-            font-size: 1.5em;
-        }
-        .btn-left, .btn-right {
-            display: flex;
-            gap: 10px;
-        }
+        .header-flex h1 { margin: 0; flex: 1; text-align: center; font-size: 1.5em; }
+        .btn-left, .btn-right { display: flex; gap: 10px; }
         .nav-buttons a, .refresh-buttons button {
             display: inline-block;
             background: #6c757d;
@@ -52,16 +36,9 @@
             cursor: pointer;
             font-size: 0.9em;
         }
-        .nav-buttons a:hover, .refresh-buttons button:hover {
-            background: #5a6268;
-        }
+        .nav-buttons a:hover, .refresh-buttons button:hover { background: #5a6268; }
 
-        .last-update {
-            text-align: center;
-            color: #666;
-            margin-bottom: 20px;
-            font-size: 0.9em;
-        }
+        .last-update { text-align: center; color: #666; margin-bottom: 20px; font-size: 0.9em; }
 
         .filtro-box {
             background: white;
@@ -87,10 +64,7 @@
             font-weight: 500;
             transition: all 0.2s;
         }
-        .filtro-buttons button:hover {
-            background: #007bff;
-            color: white;
-        }
+        .filtro-buttons button:hover { background: #007bff; color: white; }
         .custom-range {
             display: flex;
             flex-wrap: wrap;
@@ -98,11 +72,7 @@
             justify-content: center;
             align-items: center;
         }
-        .custom-range input {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-        }
+        .custom-range input { padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
         .custom-range button {
             background: #28a745;
             color: white;
@@ -112,7 +82,6 @@
             cursor: pointer;
         }
 
-        /* Forçar tabelas lado a lado, sem quebrar */
         .tables-container {
             display: flex;
             flex-direction: row;
@@ -138,10 +107,7 @@
             position: sticky;
             top: 0;
         }
-        .table-header h2 {
-            margin: 0;
-            font-size: 1.2em;
-        }
+        .table-header h2 { margin: 0; font-size: 1.2em; }
         .pill {
             background-color: #007bff;
             color: white;
@@ -151,27 +117,11 @@
             font-weight: bold;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            text-align: left;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        th {
-            background-color: #f8f9fa;
-            position: sticky;
-            top: 60px;
-        }
-        .loading {
-            text-align: center;
-            padding: 50px;
-            color: #555;
-        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; position: sticky; top: 60px; }
+        .loading { text-align: center; padding: 50px; color: #555; }
 
-        /* Botão estilizado para telefone */
         .tel-button {
             display: inline-block;
             background-color: #25D366;
@@ -190,16 +140,9 @@
             text-decoration: none;
             transform: scale(1.02);
         }
-        .tel-button:active {
-            transform: scale(0.98);
-        }
+        .tel-button:active { transform: scale(0.98); }
 
-        footer {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 0.8em;
-            color: #888;
-        }
+        footer { text-align: center; margin-top: 30px; font-size: 0.8em; color: #888; }
     </style>
 </head>
 <body>
@@ -237,35 +180,29 @@
     </div>
 
     <div class="tables-container">
-        <!-- Tabela SIM -->
         <div class="table-wrapper">
             <div class="table-header">
                 <h2>✅ Responderam SIM</h2>
                 <span id="simCount" class="pill">0</span>
             </div>
             <table id="tableSim">
-                <thead>
-                    <tr><th>Nome</th><th>Telefone</th><th>Cargo</th><th>Empresa</th><th>Respondido em</th></tr>
-                </thead>
-                <tbody><tr><td colspan="5" class="loading">Carregando...</td></tr></tbody>
-            </table>
-        </div>
-        <!-- Tabela NÃO -->
+                <thead><tr><th>Nome</th><th>Telefone</th><th>Cargo</th><th>Empresa</th><th>Respondido em</th></tr></thead>
+                <tbody><tr><td colspan="5" class="loading">Carregando...<\/td><\/tr><\/tbody>
+            <\/table>
+        <\/div>
         <div class="table-wrapper">
             <div class="table-header">
                 <h2>❌ Responderam NÃO</h2>
                 <span id="naoCount" class="pill">0</span>
             </div>
             <table id="tableNao">
-                <thead>
-                    <tr><th>Nome</th><th>Telefone</th><th>Cargo</th><th>Empresa</th><th>Respondido em</th></tr>
-                </thead>
-                <tbody><tr><td colspan="5" class="loading">Carregando...</td></tr></tbody>
-            </table>
-        </div>
-    </div>
+                <thead><tr><th>Nome</th><th>Telefone</th><th>Cargo</th><th>Empresa</th><th>Respondido em</th></tr></thead>
+                <tbody><tr><td colspan="5" class="loading">Carregando...<\/td><\/tr><\/tbody>
+            <\/table>
+        <\/div>
+    <\/div>
     <footer>Dados atualizados a cada acesso | Filtro aplicado localmente no navegador</footer>
-</div>
+<\/div>
 
 <script>
     const API_URL = 'https://testes-api-n8n-dev.nicehill-2119d736.brazilsouth.azurecontainerapps.io/webhook/nr1-dashboard-data';
@@ -315,20 +252,29 @@
         });
     }
 
+    // Função auxiliar para formatar o primeiro nome
+    function formatarPrimeiroNome(nomeCompleto) {
+        if (!nomeCompleto) return '-';
+        let primeiroNome = nomeCompleto.trim().split(' ')[0];
+        if (primeiroNome.length === 0) return '-';
+        return primeiroNome.charAt(0).toUpperCase() + primeiroNome.slice(1).toLowerCase();
+    }
+
     function renderizarTabela(tableId, dados) {
         const tbody = document.querySelector(`#${tableId} tbody`);
         if (!tbody) return;
         if (dados.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5">Nenhum registro neste período.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5">Nenhum registro neste período.<\/td><\/tr>';
             return;
         }
         let html = '';
         for (let item of dados) {
             const dataRespondido = item.respondido_em ? new Date(item.respondido_em).toLocaleString('pt-BR') : '-';
-            const nome = item.nome || '';
+            const nomeCompleto = item.nome || '';
+            const nomeFormatado = formatarPrimeiroNome(nomeCompleto);
             const telefone = item.telefone || '';
             const telefoneLimpo = telefone.replace(/\D/g, '');
-            const mensagem = `Oi ${nome}, tudo bem?`;
+            const mensagem = `Oi ${nomeFormatado}, tudo bem?`;
             const mensagemCodificada = encodeURIComponent(mensagem);
             const linkWhatsApp = telefoneLimpo ? `https://wa.me/${telefoneLimpo}?text=${mensagemCodificada}` : '#';
             const telefoneHtml = telefoneLimpo 
@@ -337,11 +283,11 @@
             
             html += `
                 <tr>
-                    <td>${escapeHtml(nome) || '-'}</td>
-                    <td>${telefoneHtml}</td>
-                    <td>${escapeHtml(item.cargo || '-')}</td>
-                    <td>${escapeHtml(item.empresa || '-')}</td>
-                    <td>${dataRespondido}</td>
+                    <td>${escapeHtml(nomeFormatado)}<\/td>
+                    <td>${telefoneHtml}<\/td>
+                    <td>${escapeHtml(item.cargo || '-')}<\/td>
+                    <td>${escapeHtml(item.empresa || '-')}<\/td>
+                    <td>${dataRespondido}<\/td>
                 </tr>
             `;
         }
@@ -382,6 +328,6 @@
 
     document.getElementById('refreshBtn').addEventListener('click', () => carregarDados());
     carregarDados();
-</script>
-</body>
-</html>
+<\/script>
+<\/body>
+<\/html>
