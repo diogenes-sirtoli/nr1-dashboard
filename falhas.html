@@ -5,192 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NR1 - Falhas no Envio</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f0f2f5;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        /* Cabeçalho com botões laterais */
-        .header-flex {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            margin-bottom: 15px;
-            gap: 15px;
-        }
-        .header-flex h1 {
-            margin: 0;
-            flex: 1;
-            text-align: center;
-            font-size: 1.5em;
-        }
-        .btn-left, .btn-right {
-            display: flex;
-            gap: 10px;
-        }
-        .nav-buttons a, .refresh-buttons button {
-            display: inline-block;
-            background: #6c757d;
-            color: white;
-            padding: 8px 16px;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: bold;
-            transition: background 0.2s;
-            border: none;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-        .nav-buttons a:hover, .refresh-buttons button:hover {
-            background: #5a6268;
-        }
-
-        .last-update {
-            text-align: center;
-            color: #666;
-            margin-bottom: 20px;
-            font-size: 0.9em;
-        }
-
-        .filtro-box {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-            text-align: center;
-        }
-        .filtro-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-        .filtro-buttons button {
-            padding: 8px 16px;
-            background: #e9ecef;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        .filtro-buttons button:hover {
-            background: #007bff;
-            color: white;
-        }
-        .custom-range {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            justify-content: center;
-            align-items: center;
-        }
-        .custom-range input {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-        }
-        .custom-range button {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .table-wrapper {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            overflow: auto;
-            max-height: 600px;
-        }
-        .table-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            background: white;
-            border-bottom: 2px solid #ddd;
-            position: sticky;
-            top: 0;
-        }
-        .table-header h2 {
-            margin: 0;
-            font-size: 1.2em;
-        }
-        .pill {
-            background-color: #dc3545;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 40px;
-            font-size: 0.8em;
-            font-weight: bold;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            text-align: left;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        th {
-            background-color: #f8f9fa;
-            position: sticky;
-            top: 60px;
-        }
-        .loading {
-            text-align: center;
-            padding: 50px;
-            color: #555;
-        }
-        .error-code {
-            font-family: monospace;
-            font-weight: bold;
-        }
-        .tel-button {
-            display: inline-block;
-            background-color: #25D366;
-            color: white !important;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: bold;
-            text-decoration: none;
-            transition: background-color 0.2s, transform 0.1s;
-            border: none;
-            cursor: pointer;
-        }
-        .tel-button:hover {
-            background-color: #128C7E;
-            text-decoration: none;
-            transform: scale(1.02);
-        }
-        .tel-button:active {
-            transform: scale(0.98);
-        }
-        footer {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 0.8em;
-            color: #888;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header-flex { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 15px; gap: 15px; }
+        .header-flex h1 { margin: 0; flex: 1; text-align: center; font-size: 1.5em; }
+        .btn-left, .btn-right { display: flex; gap: 10px; }
+        .nav-buttons a, .refresh-buttons button { display: inline-block; background: #6c757d; color: white; padding: 8px 16px; text-decoration: none; border-radius: 8px; font-weight: bold; transition: background 0.2s; border: none; cursor: pointer; font-size: 0.9em; }
+        .nav-buttons a:hover, .refresh-buttons button:hover { background: #5a6268; }
+        .last-update { text-align: center; color: #666; margin-bottom: 20px; font-size: 0.9em; }
+        .filtro-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px; text-align: center; }
+        .filtro-buttons { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 20px; }
+        .filtro-buttons button { padding: 8px 16px; background: #e9ecef; border: none; border-radius: 20px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        .filtro-buttons button:hover { background: #007bff; color: white; }
+        .custom-range { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; align-items: center; }
+        .custom-range input { padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
+        .custom-range button { background: #28a745; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; }
+        .table-wrapper { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: auto; max-height: 600px; }
+        .table-header { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: white; border-bottom: 2px solid #ddd; position: sticky; top: 0; }
+        .table-header h2 { margin: 0; font-size: 1.2em; }
+        .pill { background-color: #dc3545; color: white; padding: 4px 12px; border-radius: 40px; font-size: 0.8em; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; position: sticky; top: 60px; }
+        .loading { text-align: center; padding: 50px; color: #555; }
+        .error-code { font-family: monospace; font-weight: bold; }
+        .tel-button { display: inline-block; background-color: #25D366; color: white !important; padding: 5px 12px; border-radius: 20px; font-size: 0.85em; font-weight: bold; text-decoration: none; transition: background-color 0.2s, transform 0.1s; border: none; cursor: pointer; }
+        .tel-button:hover { background-color: #128C7E; text-decoration: none; transform: scale(1.02); }
+        .tel-button:active { transform: scale(0.98); }
+        footer { text-align: center; margin-top: 30px; font-size: 0.8em; color: #888; }
     </style>
 </head>
 <body>
@@ -289,6 +132,7 @@
         return lista.filter(item => {
             if (!item.timestamp) return false;
             const data = new Date(item.timestamp);
+            if (isNaN(data.getTime())) return false;
             if (start && data < start) return false;
             if (end && data > end) return false;
             return true;
@@ -297,9 +141,15 @@
 
     function formatarPrimeiroNome(nomeCompleto) {
         if (!nomeCompleto || nomeCompleto === 'Não identificado') return 'Não identificado';
-        let primeiroNome = nomeCompleto.trim().split(' ')[0];
+        let primeiroNome = String(nomeCompleto).trim().split(' ')[0];
         if (primeiroNome.length === 0) return '-';
         return primeiroNome.charAt(0).toUpperCase() + primeiroNome.slice(1).toLowerCase();
+    }
+
+    function escapeHtml(value) {
+        if (value === null || value === undefined) return '';
+        let str = String(value);
+        return str.replace(/[&<>]/g, m => (m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;')));
     }
 
     function renderizarTabela(dados) {
@@ -312,7 +162,7 @@
         let html = '';
         for (let item of dados) {
             const nomeExibido = formatarPrimeiroNome(item.nome);
-            const telefone = item.telefone || '';
+            const telefone = item.telefone ? String(item.telefone) : '';
             const telefoneLimpo = telefone.replace(/\D/g, '');
             const mensagem = `Oi ${nomeExibido !== 'Não identificado' ? nomeExibido : 'cliente'}, tudo bem?`;
             const mensagemCodificada = encodeURIComponent(mensagem);
@@ -321,26 +171,29 @@
                 ? `<a href="${linkWhatsApp}" target="_blank" rel="noopener noreferrer" class="tel-button">${escapeHtml(telefone)}</a>`
                 : escapeHtml(telefone) || '-';
             
-            const dataHora = item.timestamp ? new Date(item.timestamp).toLocaleString('pt-BR') : '-';
-            const codigoErro = item.codigo_erro || '-';
-            const mensagemErro = item.mensagem_erro || '-';
+            let dataHora = '-';
+            if (item.timestamp) {
+                const dataObj = new Date(item.timestamp);
+                if (!isNaN(dataObj.getTime())) {
+                    dataHora = dataObj.toLocaleString('pt-BR');
+                } else {
+                    dataHora = escapeHtml(item.timestamp);
+                }
+            }
+            const codigoErro = (item.codigo_erro !== null && item.codigo_erro !== undefined) ? escapeHtml(item.codigo_erro) : '-';
+            const mensagemErro = item.mensagem_erro ? escapeHtml(item.mensagem_erro) : '-';
             
             html += `
                 <tr>
                     <td>${escapeHtml(nomeExibido)}</td>
                     <td>${telefoneHtml}</td>
                     <td>${dataHora}</td>
-                    <td class="error-code">${escapeHtml(codigoErro)}</td>
-                    <td>${escapeHtml(mensagemErro)}</td>
+                    <td class="error-code">${codigoErro}</td>
+                    <td>${mensagemErro}</td>
                 </tr>
             `;
         }
         tbody.innerHTML = html;
-    }
-
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, m => (m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;')));
     }
 
     function setQuickFilter(tipo) {
