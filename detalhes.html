@@ -108,6 +108,8 @@
         th { background-color: #f8f9fa; position: sticky; top: 60px; }
         .loading { text-align: center; padding: 50px; color: #555; }
         footer { text-align: center; margin-top: 30px; font-size: 0.8em; color: #888; }
+        a { text-decoration: none; color: #007bff; }
+        a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -168,7 +170,7 @@
 
     let dadosCompletos = { lista_sim: [], lista_nao: [] };
     let dadosCarregados = false;
-    let currentStartDate = null, currentEndDate = null; // guardar filtro atual
+    let currentStartDate = null, currentEndDate = null;
 
     async function carregarDados() {
         try {
@@ -176,15 +178,11 @@
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
             const resultado = data.resultado;
-
             dadosCompletos.lista_sim = resultado.lista_sim || [];
             dadosCompletos.lista_nao = resultado.lista_nao || [];
             dadosCarregados = true;
-
             const atualizado = new Date().toLocaleString('pt-BR');
             document.getElementById('last-update').innerHTML = `Última atualização: ${atualizado}`;
-
-            // reaplicar o filtro atual (se houver)
             aplicarFiltro(currentStartDate, currentEndDate);
         } catch (error) {
             document.getElementById('last-update').innerHTML = 'Erro ao carregar dados';
@@ -196,13 +194,10 @@
         if (!dadosCarregados) return;
         currentStartDate = startDate;
         currentEndDate = endDate;
-
         const simFiltrados = filtrarPorData(dadosCompletos.lista_sim, startDate, endDate);
         const naoFiltrados = filtrarPorData(dadosCompletos.lista_nao, startDate, endDate);
-
         renderizarTabela('tableSim', simFiltrados);
         renderizarTabela('tableNao', naoFiltrados);
-
         document.getElementById('simCount').innerText = simFiltrados.length;
         document.getElementById('naoCount').innerText = naoFiltrados.length;
     }
@@ -218,6 +213,7 @@
         });
     }
 
+    // FUNÇÃO MODIFICADA: telefone vira link do WhatsApp
     function renderizarTabela(tableId, dados) {
         const tbody = document.querySelector(`#${tableId} tbody`);
         if (!tbody) return;
@@ -228,10 +224,17 @@
         let html = '';
         for (let item of dados) {
             const dataRespondido = item.respondido_em ? new Date(item.respondido_em).toLocaleString('pt-BR') : '-';
+            let telefone = item.telefone || '';
+            let telefoneLimpo = telefone.replace(/\D/g, '');
+            let linkWhatsApp = telefoneLimpo ? `https://wa.me/${telefoneLimpo}` : '#';
+            let telefoneHtml = telefoneLimpo 
+                ? `<a href="${linkWhatsApp}" target="_blank" rel="noopener noreferrer">${escapeHtml(telefone)}</a>`
+                : escapeHtml(telefone) || '-';
+            
             html += `
                 <tr>
                     <td>${escapeHtml(item.nome || '-')}</td>
-                    <td>${escapeHtml(item.telefone || '-')}</td>
+                    <td>${telefoneHtml}</td>
                     <td>${escapeHtml(item.cargo || '-')}</td>
                     <td>${escapeHtml(item.empresa || '-')}</td>
                     <td>${dataRespondido}</td>
