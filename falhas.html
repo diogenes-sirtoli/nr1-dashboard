@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NR1 - Falhas no Envio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Cabeçalho com botões laterais */
+        .header-flex {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            gap: 15px;
+        }
+        .header-flex h1 {
+            margin: 0;
+            flex: 1;
+            text-align: center;
+            font-size: 1.5em;
+        }
+        .btn-left, .btn-right {
+            display: flex;
+            gap: 10px;
+        }
+        .nav-buttons a, .refresh-buttons button {
+            display: inline-block;
+            background: #6c757d;
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: background 0.2s;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .nav-buttons a:hover, .refresh-buttons button:hover {
+            background: #5a6268;
+        }
+
+        .last-update {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+
+        .filtro-box {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .filtro-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .filtro-buttons button {
+            padding: 8px 16px;
+            background: #e9ecef;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .filtro-buttons button:hover {
+            background: #007bff;
+            color: white;
+        }
+        .custom-range {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+        }
+        .custom-range input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        .custom-range button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .table-wrapper {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: auto;
+            max-height: 600px;
+        }
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-bottom: 2px solid #ddd;
+            position: sticky;
+            top: 0;
+        }
+        .table-header h2 {
+            margin: 0;
+            font-size: 1.2em;
+        }
+        .pill {
+            background-color: #dc3545;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background-color: #f8f9fa;
+            position: sticky;
+            top: 60px;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #555;
+        }
+        .error-code {
+            font-family: monospace;
+            font-weight: bold;
+        }
+        .tel-button {
+            display: inline-block;
+            background-color: #25D366;
+            color: white !important;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            text-decoration: none;
+            transition: background-color 0.2s, transform 0.1s;
+            border: none;
+            cursor: pointer;
+        }
+        .tel-button:hover {
+            background-color: #128C7E;
+            text-decoration: none;
+            transform: scale(1.02);
+        }
+        .tel-button:active {
+            transform: scale(0.98);
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.8em;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header-flex">
+        <div class="btn-left">
+            <div class="nav-buttons">
+                <a href="index.html">◀ Dashboard</a>
+                <a href="detalhes.html">📋 Respostas SIM/NAO</a>
+            </div>
+        </div>
+        <h1>⚠️ Falhas no Envio de Mensagens</h1>
+        <div class="btn-right">
+            <div class="refresh-buttons">
+                <button id="refreshBtn">🔄 Atualizar dados</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="last-update" class="last-update">Carregando dados...</div>
+
+    <div class="filtro-box">
+        <div class="filtro-buttons">
+            <button onclick="setQuickFilter('24h')">📅 Últimas 24h</button>
+            <button onclick="setQuickFilter('5d')">📅 Últimos 5 dias</button>
+            <button onclick="setQuickFilter('7d')">📅 Última semana</button>
+            <button onclick="setQuickFilter('30d')">📅 Último mês</button>
+            <button onclick="clearFilter()">🗑️ Limpar filtro</button>
+        </div>
+        <div class="custom-range">
+            <input type="date" id="startDate">
+            <span>até</span>
+            <input type="date" id="endDate">
+            <button onclick="applyCustomFilter()">Aplicar período</button>
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <div class="table-header">
+            <h2>⚠️ Mensagens com Falha (failed)</h2>
+            <span id="countPill" class="pill">0</span>
+        </div>
+        <table id="falhasTable">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Telefone</th>
+                    <th>Data/Hora</th>
+                    <th>Código do Erro</th>
+                    <th>Mensagem de Erro</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="5" class="loading">Carregando...</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <footer>Falhas registradas a partir dos webhooks do WhatsApp | Filtro local</footer>
+</div>
+
+<script>
+    const API_URL = 'https://testes-api-n8n-dev.nicehill-2119d736.brazilsouth.azurecontainerapps.io/webhook/nr1-dashboard-data';
+
+    let dadosFalhas = [];
+    let dadosCarregados = false;
+    let currentStartDate = null, currentEndDate = null;
+
+    async function carregarDados() {
+        try {
+            const response = await fetch(API_URL);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            const resultado = data.resultado;
+            dadosFalhas = resultado.lista_falhas || [];
+            dadosCarregados = true;
+            const atualizado = new Date().toLocaleString('pt-BR');
+            document.getElementById('last-update').innerHTML = `Última atualização: ${atualizado}`;
+            aplicarFiltro(currentStartDate, currentEndDate);
+        } catch (error) {
+            document.getElementById('last-update').innerHTML = 'Erro ao carregar dados';
+            console.error('Erro:', error);
+        }
+    }
+
+    function aplicarFiltro(startDate, endDate) {
+        if (!dadosCarregados) return;
+        currentStartDate = startDate;
+        currentEndDate = endDate;
+        const filtrados = filtrarPorData(dadosFalhas, startDate, endDate);
+        renderizarTabela(filtrados);
+        document.getElementById('countPill').innerText = filtrados.length;
+    }
+
+    function filtrarPorData(lista, start, end) {
+        if (!start && !end) return lista;
+        return lista.filter(item => {
+            if (!item.timestamp) return false;
+            const data = new Date(item.timestamp);
+            if (start && data < start) return false;
+            if (end && data > end) return false;
+            return true;
+        });
+    }
+
+    function formatarPrimeiroNome(nomeCompleto) {
+        if (!nomeCompleto || nomeCompleto === 'Não identificado') return 'Não identificado';
+        let primeiroNome = nomeCompleto.trim().split(' ')[0];
+        if (primeiroNome.length === 0) return '-';
+        return primeiroNome.charAt(0).toUpperCase() + primeiroNome.slice(1).toLowerCase();
+    }
+
+    function renderizarTabela(dados) {
+        const tbody = document.querySelector('#falhasTable tbody');
+        if (!tbody) return;
+        if (dados.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5">Nenhuma falha registrada no período.</td></tr>';
+            return;
+        }
+        let html = '';
+        for (let item of dados) {
+            const nomeExibido = formatarPrimeiroNome(item.nome);
+            const telefone = item.telefone || '';
+            const telefoneLimpo = telefone.replace(/\D/g, '');
+            const mensagem = `Oi ${nomeExibido !== 'Não identificado' ? nomeExibido : 'cliente'}, tudo bem?`;
+            const mensagemCodificada = encodeURIComponent(mensagem);
+            const linkWhatsApp = telefoneLimpo ? `https://wa.me/${telefoneLimpo}?text=${mensagemCodificada}` : '#';
+            const telefoneHtml = telefoneLimpo 
+                ? `<a href="${linkWhatsApp}" target="_blank" rel="noopener noreferrer" class="tel-button">${escapeHtml(telefone)}</a>`
+                : escapeHtml(telefone) || '-';
+            
+            const dataHora = item.timestamp ? new Date(item.timestamp).toLocaleString('pt-BR') : '-';
+            const codigoErro = item.codigo_erro || '-';
+            const mensagemErro = item.mensagem_erro || '-';
+            
+            html += `
+                <tr>
+                    <td>${escapeHtml(nomeExibido)}</td>
+                    <td>${telefoneHtml}</td>
+                    <td>${dataHora}</td>
+                    <td class="error-code">${escapeHtml(codigoErro)}</td>
+                    <td>${escapeHtml(mensagemErro)}</td>
+                </tr>
+            `;
+        }
+        tbody.innerHTML = html;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => (m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;')));
+    }
+
+    function setQuickFilter(tipo) {
+        let start = null, end = new Date();
+        end.setHours(23, 59, 59, 999);
+        const now = new Date();
+        if (tipo === '24h') { start = new Date(); start.setDate(now.getDate() - 1); start.setHours(0,0,0,0); }
+        else if (tipo === '5d') { start = new Date(); start.setDate(now.getDate() - 5); start.setHours(0,0,0,0); }
+        else if (tipo === '7d') { start = new Date(); start.setDate(now.getDate() - 7); start.setHours(0,0,0,0); }
+        else if (tipo === '30d') { start = new Date(); start.setDate(now.getDate() - 30); start.setHours(0,0,0,0); }
+        if (start) document.getElementById('startDate').value = start.toISOString().split('T')[0];
+        document.getElementById('endDate').value = end.toISOString().split('T')[0];
+        aplicarFiltro(start, end);
+    }
+
+    function clearFilter() {
+        document.getElementById('startDate').value = '';
+        document.getElementById('endDate').value = '';
+        aplicarFiltro(null, null);
+    }
+
+    function applyCustomFilter() {
+        let start = document.getElementById('startDate').value;
+        let end = document.getElementById('endDate').value;
+        let startDate = start ? new Date(start + 'T00:00:00') : null;
+        let endDate = end ? new Date(end + 'T23:59:59') : null;
+        aplicarFiltro(startDate, endDate);
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', () => carregarDados());
+    carregarDados();
+</script>
+</body>
+</html>
