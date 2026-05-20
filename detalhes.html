@@ -5,198 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NR1 - Detalhes das Respostas</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f0f2f5;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .header-flex {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            margin-bottom: 10px;
-            gap: 15px;
-        }
-        .header-flex h1 {
-            margin: 0;
-            flex: 1;
-            text-align: center;
-            font-size: 1.5em;
-        }
-        .btn-left, .btn-right {
-            display: flex;
-            gap: 10px;
-        }
-        .nav-buttons a, .refresh-buttons button {
-            display: inline-block;
-            background: #6c757d;
-            color: white;
-            padding: 8px 16px;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: bold;
-            transition: background 0.2s;
-            border: none;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-        .nav-buttons a:hover, .refresh-buttons button:hover {
-            background: #5a6268;
-        }
-
-        .last-update {
-            text-align: center;
-            color: #666;
-            margin-bottom: 20px;
-            font-size: 0.9em;
-        }
-
-        .filtro-box {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-            text-align: center;
-        }
-        .filtro-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-        .filtro-buttons button {
-            padding: 8px 16px;
-            background: #e9ecef;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        .filtro-buttons button:hover {
-            background: #007bff;
-            color: white;
-        }
-        .custom-range {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            justify-content: center;
-            align-items: center;
-        }
-        .custom-range input {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-        }
-        .custom-range button {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .tables-container {
-            display: flex;
-            flex-direction: row;
-            gap: 30px;
-            overflow-x: auto;
-        }
-        .table-wrapper {
-            flex: 1;
-            min-width: 300px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            overflow: auto;
-            max-height: 600px;
-        }
-        .table-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            background: white;
-            border-bottom: 2px solid #ddd;
-            position: sticky;
-            top: 0;
-        }
-        .table-header h2 {
-            margin: 0;
-            font-size: 1.2em;
-        }
-        .pill {
-            background-color: #007bff;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 40px;
-            font-size: 0.8em;
-            font-weight: bold;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            text-align: left;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        th {
-            background-color: #f8f9fa;
-            position: sticky;
-            top: 60px;
-        }
-        .loading {
-            text-align: center;
-            padding: 50px;
-            color: #555;
-        }
-
-        .tel-button {
-            display: inline-block;
-            background-color: #25D366;
-            color: white !important;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: bold;
-            text-decoration: none;
-            transition: background-color 0.2s, transform 0.1s;
-            border: none;
-            cursor: pointer;
-        }
-        .tel-button:hover {
-            background-color: #128C7E;
-            text-decoration: none;
-            transform: scale(1.02);
-        }
-        .tel-button:active {
-            transform: scale(0.98);
-        }
-
-        footer {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 0.8em;
-            color: #888;
-        }
+        /* (mesmo estilo anterior) */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header-flex { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 10px; gap: 15px; }
+        .header-flex h1 { margin: 0; flex: 1; text-align: center; font-size: 1.5em; }
+        .btn-left, .btn-right { display: flex; gap: 10px; }
+        .nav-buttons a, .refresh-buttons button { display: inline-block; background: #6c757d; color: white; padding: 8px 16px; text-decoration: none; border-radius: 8px; font-weight: bold; transition: background 0.2s; border: none; cursor: pointer; font-size: 0.9em; }
+        .nav-buttons a:hover, .refresh-buttons button:hover { background: #5a6268; }
+        .last-update { text-align: center; color: #666; margin-bottom: 20px; font-size: 0.9em; }
+        .filtro-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px; text-align: center; }
+        .filtro-buttons { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 20px; }
+        .filtro-buttons button { padding: 8px 16px; background: #e9ecef; border: none; border-radius: 20px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        .filtro-buttons button:hover { background: #007bff; color: white; }
+        .custom-range { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; align-items: center; }
+        .custom-range input { padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
+        .custom-range button { background: #28a745; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; }
+        .tables-container { display: flex; flex-direction: row; gap: 30px; overflow-x: auto; }
+        .table-wrapper { flex: 1; min-width: 300px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: auto; max-height: 600px; }
+        .table-header { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: white; border-bottom: 2px solid #ddd; position: sticky; top: 0; }
+        .table-header h2 { margin: 0; font-size: 1.2em; }
+        .pill { background-color: #007bff; color: white; padding: 4px 12px; border-radius: 40px; font-size: 0.8em; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; position: sticky; top: 60px; }
+        .loading { text-align: center; padding: 50px; color: #555; }
+        .tel-button { display: inline-block; background-color: #25D366; color: white !important; padding: 5px 12px; border-radius: 20px; font-size: 0.85em; font-weight: bold; text-decoration: none; transition: background-color 0.2s, transform 0.1s; border: none; cursor: pointer; }
+        .tel-button:hover { background-color: #128C7E; text-decoration: none; transform: scale(1.02); }
+        .tel-button:active { transform: scale(0.98); }
+        footer { text-align: center; margin-top: 30px; font-size: 0.8em; color: #888; }
     </style>
 </head>
 <body>
@@ -204,7 +42,8 @@
     <div class="header-flex">
         <div class="btn-left">
             <div class="nav-buttons">
-                <a href="index.html">◀ Voltar ao resumo</a>
+                <a href="index.html">◀ Dashboard</a>
+                <a href="falhas.html">⚠️ Ver falhas</a>
             </div>
         </div>
         <h1>📋 Detalhamento das Respostas</h1>
@@ -235,36 +74,12 @@
 
     <div class="tables-container">
         <div class="table-wrapper">
-            <div class="table-header">
-                <h2>✅ Responderam SIM</h2>
-                <span id="simCount" class="pill">0</span>
-            </div>
-            <table id="tableSim">
-                <thead>
-                    <tr>
-                        <th>Nome</th><th>Telefone</th><th>Cargo</th><th>Empresa</th><th>Respondido em</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td colspan="5" class="loading">Carregando...</td></tr>
-                </tbody>
-            </table>
+            <div class="table-header"><h2>✅ Responderam SIM</h2><span id="simCount" class="pill">0</span></div>
+            <table id="tableSim"><thead><tr><th>Nome</th><th>Telefone</th><th>Cargo</th><th>Empresa</th><th>Respondido em</th></tr></thead><tbody><tr><td colspan="5" class="loading">Carregando...</td></tr></tbody></table>
         </div>
         <div class="table-wrapper">
-            <div class="table-header">
-                <h2>❌ Responderam NÃO</h2>
-                <span id="naoCount" class="pill">0</span>
-            </div>
-            <table id="tableNao">
-                <thead>
-                    <tr>
-                        <th>Nome</th><th>Telefone</th><th>Cargo</th><th>Empresa</th><th>Respondido em</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td colspan="5" class="loading">Carregando...</td></tr>
-                </tbody>
-            </table>
+            <div class="table-header"><h2>❌ Responderam NÃO</h2><span id="naoCount" class="pill">0</span></div>
+            <table id="tableNao"><thead><tr><th>Nome</th><th>Telefone</th><th>Cargo</th><th>Empresa</th><th>Respondido em</th></tr></thead><tbody><tr><td colspan="5" class="loading">Carregando...</td></tr></tbody></table>
         </div>
     </div>
     <footer>Dados atualizados a cada acesso | Filtro aplicado localmente no navegador</footer>
@@ -272,7 +87,6 @@
 
 <script>
     const API_URL = 'https://testes-api-n8n-dev.nicehill-2119d736.brazilsouth.azurecontainerapps.io/webhook/nr1-dashboard-data';
-
     let dadosCompletos = { lista_sim: [], lista_nao: [] };
     let dadosCarregados = false;
     let currentStartDate = null, currentEndDate = null;
@@ -282,9 +96,7 @@
             const response = await fetch(API_URL);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
-            
-            // Estrutura: pode ter "resultado" ou ser direto
-            const resultado = data.resultado || data;
+            const resultado = data.resultado;
             dadosCompletos.lista_sim = resultado.lista_sim || [];
             dadosCompletos.lista_nao = resultado.lista_nao || [];
             dadosCarregados = true;
@@ -337,61 +149,31 @@
         let html = '';
         for (let item of dados) {
             const dataRespondido = item.respondido_em ? new Date(item.respondido_em).toLocaleString('pt-BR') : '-';
-            const nomeCompleto = item.nome || '';
-            const nomeFormatado = formatarPrimeiroNome(nomeCompleto);
+            const nomeFormatado = formatarPrimeiroNome(item.nome);
             const telefone = item.telefone || '';
             const telefoneLimpo = telefone.replace(/\D/g, '');
             const mensagem = `Oi ${nomeFormatado}, tudo bem?`;
             const mensagemCodificada = encodeURIComponent(mensagem);
             const linkWhatsApp = telefoneLimpo ? `https://wa.me/${telefoneLimpo}?text=${mensagemCodificada}` : '#';
-            const telefoneHtml = telefoneLimpo 
-                ? `<a href="${linkWhatsApp}" target="_blank" rel="noopener noreferrer" class="tel-button">${escapeHtml(telefone)}</a>`
-                : escapeHtml(telefone) || '-';
-            
-            html += `
-                <tr>
-                    <td>${escapeHtml(nomeFormatado)}</td>
-                    <td>${telefoneHtml}</td>
-                    <td>${escapeHtml(item.cargo || '-')}</td>
-                    <td>${escapeHtml(item.empresa || '-')}</td>
-                    <td>${dataRespondido}</td>
-                </tr>
-            `;
+            const telefoneHtml = telefoneLimpo ? `<a href="${linkWhatsApp}" target="_blank" rel="noopener noreferrer" class="tel-button">${escapeHtml(telefone)}</a>` : escapeHtml(telefone) || '-';
+            html += `<tr><td>${escapeHtml(nomeFormatado)}</td><td>${telefoneHtml}</td><td>${escapeHtml(item.cargo || '-')}</td><td>${escapeHtml(item.empresa || '-')}</td><td>${dataRespondido}</td></tr>`;
         }
         tbody.innerHTML = html;
     }
 
     function escapeHtml(str) {
         if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
+        return str.replace(/[&<>]/g, m => (m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;')));
     }
 
     function setQuickFilter(tipo) {
         let start = null, end = new Date();
         end.setHours(23, 59, 59, 999);
         const now = new Date();
-        if (tipo === '24h') {
-            start = new Date();
-            start.setDate(now.getDate() - 1);
-            start.setHours(0, 0, 0, 0);
-        } else if (tipo === '5d') {
-            start = new Date();
-            start.setDate(now.getDate() - 5);
-            start.setHours(0, 0, 0, 0);
-        } else if (tipo === '7d') {
-            start = new Date();
-            start.setDate(now.getDate() - 7);
-            start.setHours(0, 0, 0, 0);
-        } else if (tipo === '30d') {
-            start = new Date();
-            start.setDate(now.getDate() - 30);
-            start.setHours(0, 0, 0, 0);
-        }
+        if (tipo === '24h') { start = new Date(); start.setDate(now.getDate() - 1); start.setHours(0,0,0,0); }
+        else if (tipo === '5d') { start = new Date(); start.setDate(now.getDate() - 5); start.setHours(0,0,0,0); }
+        else if (tipo === '7d') { start = new Date(); start.setDate(now.getDate() - 7); start.setHours(0,0,0,0); }
+        else if (tipo === '30d') { start = new Date(); start.setDate(now.getDate() - 30); start.setHours(0,0,0,0); }
         if (start) document.getElementById('startDate').value = start.toISOString().split('T')[0];
         document.getElementById('endDate').value = end.toISOString().split('T')[0];
         aplicarFiltro(start, end);
