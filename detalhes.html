@@ -112,10 +112,12 @@
             cursor: pointer;
         }
 
+        /* Forçar tabelas lado a lado, sem quebrar */
         .tables-container {
             display: flex;
-            flex-wrap: wrap;
+            flex-direction: row;
             gap: 30px;
+            overflow-x: auto;
         }
         .table-wrapper {
             flex: 1;
@@ -169,7 +171,7 @@
             color: #555;
         }
 
-        /* Estilo de botão para o link do telefone */
+        /* Botão estilizado para telefone */
         .tel-button {
             display: inline-block;
             background-color: #25D366;
@@ -202,7 +204,6 @@
 </head>
 <body>
 <div class="container">
-    <!-- Cabeçalho otimizado -->
     <div class="header-flex">
         <div class="btn-left">
             <div class="nav-buttons">
@@ -236,6 +237,7 @@
     </div>
 
     <div class="tables-container">
+        <!-- Tabela SIM -->
         <div class="table-wrapper">
             <div class="table-header">
                 <h2>✅ Responderam SIM</h2>
@@ -245,11 +247,10 @@
                 <thead>
                     <tr><th>Nome</th><th>Telefone</th><th>Cargo</th><th>Empresa</th><th>Respondido em</th></tr>
                 </thead>
-                <tbody>
-                    <tr><td colspan="5" class="loading">Carregando...<\/td><\/tr>
-                </tbody>
-            <\/table>
-        <\/div>
+                <tbody><tr><td colspan="5" class="loading">Carregando...</td></tr></tbody>
+            </table>
+        </div>
+        <!-- Tabela NÃO -->
         <div class="table-wrapper">
             <div class="table-header">
                 <h2>❌ Responderam NÃO</h2>
@@ -259,14 +260,12 @@
                 <thead>
                     <tr><th>Nome</th><th>Telefone</th><th>Cargo</th><th>Empresa</th><th>Respondido em</th></tr>
                 </thead>
-                <tbody>
-                    <tr><td colspan="5" class="loading">Carregando...<\/td><\/tr>
-                </tbody>
-            <\/table>
-        <\/div>
-    <\/div>
+                <tbody><tr><td colspan="5" class="loading">Carregando...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
     <footer>Dados atualizados a cada acesso | Filtro aplicado localmente no navegador</footer>
-<\/div>
+</div>
 
 <script>
     const API_URL = 'https://testes-api-n8n-dev.nicehill-2119d736.brazilsouth.azurecontainerapps.io/webhook/nr1-dashboard-data';
@@ -320,7 +319,7 @@
         const tbody = document.querySelector(`#${tableId} tbody`);
         if (!tbody) return;
         if (dados.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5">Nenhum registro neste período.<\/td><\/tr>';
+            tbody.innerHTML = '<tr><td colspan="5">Nenhum registro neste período.</td></tr>';
             return;
         }
         let html = '';
@@ -338,11 +337,11 @@
             
             html += `
                 <tr>
-                    <td>${escapeHtml(nome) || '-'}<\/td>
-                    <td>${telefoneHtml}<\/td>
-                    <td>${escapeHtml(item.cargo || '-')}<\/td>
-                    <td>${escapeHtml(item.empresa || '-')}<\/td>
-                    <td>${dataRespondido}<\/td>
+                    <td>${escapeHtml(nome) || '-'}</td>
+                    <td>${telefoneHtml}</td>
+                    <td>${escapeHtml(item.cargo || '-')}</td>
+                    <td>${escapeHtml(item.empresa || '-')}</td>
+                    <td>${dataRespondido}</td>
                 </tr>
             `;
         }
