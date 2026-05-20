@@ -5,13 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NR1 - Detalhes das Respostas</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #f0f2f5;
             padding: 20px;
         }
-        .container { max-width: 1400px; margin: 0 auto; }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
 
         .header-flex {
             display: flex;
@@ -21,8 +28,16 @@
             margin-bottom: 10px;
             gap: 15px;
         }
-        .header-flex h1 { margin: 0; flex: 1; text-align: center; font-size: 1.5em; }
-        .btn-left, .btn-right { display: flex; gap: 10px; }
+        .header-flex h1 {
+            margin: 0;
+            flex: 1;
+            text-align: center;
+            font-size: 1.5em;
+        }
+        .btn-left, .btn-right {
+            display: flex;
+            gap: 10px;
+        }
         .nav-buttons a, .refresh-buttons button {
             display: inline-block;
             background: #6c757d;
@@ -36,9 +51,16 @@
             cursor: pointer;
             font-size: 0.9em;
         }
-        .nav-buttons a:hover, .refresh-buttons button:hover { background: #5a6268; }
+        .nav-buttons a:hover, .refresh-buttons button:hover {
+            background: #5a6268;
+        }
 
-        .last-update { text-align: center; color: #666; margin-bottom: 20px; font-size: 0.9em; }
+        .last-update {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
 
         .filtro-box {
             background: white;
@@ -64,7 +86,10 @@
             font-weight: 500;
             transition: all 0.2s;
         }
-        .filtro-buttons button:hover { background: #007bff; color: white; }
+        .filtro-buttons button:hover {
+            background: #007bff;
+            color: white;
+        }
         .custom-range {
             display: flex;
             flex-wrap: wrap;
@@ -72,7 +97,11 @@
             justify-content: center;
             align-items: center;
         }
-        .custom-range input { padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
+        .custom-range input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
         .custom-range button {
             background: #28a745;
             color: white;
@@ -107,7 +136,10 @@
             position: sticky;
             top: 0;
         }
-        .table-header h2 { margin: 0; font-size: 1.2em; }
+        .table-header h2 {
+            margin: 0;
+            font-size: 1.2em;
+        }
         .pill {
             background-color: #007bff;
             color: white;
@@ -117,10 +149,25 @@
             font-weight: bold;
         }
 
-        table { width: 100%; border-collapse: collapse; }
-        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #eee; }
-        th { background-color: #f8f9fa; position: sticky; top: 60px; }
-        .loading { text-align: center; padding: 50px; color: #555; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background-color: #f8f9fa;
+            position: sticky;
+            top: 60px;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #555;
+        }
 
         .tel-button {
             display: inline-block;
@@ -140,9 +187,16 @@
             text-decoration: none;
             transform: scale(1.02);
         }
-        .tel-button:active { transform: scale(0.98); }
+        .tel-button:active {
+            transform: scale(0.98);
+        }
 
-        footer { text-align: center; margin-top: 30px; font-size: 0.8em; color: #888; }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.8em;
+            color: #888;
+        }
     </style>
 </head>
 <body>
@@ -186,8 +240,14 @@
                 <span id="simCount" class="pill">0</span>
             </div>
             <table id="tableSim">
-                <thead><tr><th>Nome</th><th>Telefone</th><th>Cargo</th><th>Empresa</th><th>Respondido em</th></tr></thead>
-                <tbody><tr><td colspan="5" class="loading">Carregando...</td></tr></tbody>
+                <thead>
+                    <tr>
+                        <th>Nome</th><th>Telefone</th><th>Cargo</th><th>Empresa</th><th>Respondido em</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="5" class="loading">Carregando...</td></tr>
+                </tbody>
             </table>
         </div>
         <div class="table-wrapper">
@@ -196,8 +256,14 @@
                 <span id="naoCount" class="pill">0</span>
             </div>
             <table id="tableNao">
-                <thead><tr><th>Nome</th><th>Telefone</th><th>Cargo</th><th>Empresa</th><th>Respondido em</th></tr></thead>
-                <tbody><tr><td colspan="5" class="loading">Carregando...</td></tr></tbody>
+                <thead>
+                    <tr>
+                        <th>Nome</th><th>Telefone</th><th>Cargo</th><th>Empresa</th><th>Respondido em</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="5" class="loading">Carregando...</td></tr>
+                </tbody>
             </table>
         </div>
     </div>
@@ -216,7 +282,9 @@
             const response = await fetch(API_URL);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
-            const resultado = data.resultado;
+            
+            // Estrutura: pode ter "resultado" ou ser direto
+            const resultado = data.resultado || data;
             dadosCompletos.lista_sim = resultado.lista_sim || [];
             dadosCompletos.lista_nao = resultado.lista_nao || [];
             dadosCarregados = true;
@@ -252,7 +320,6 @@
         });
     }
 
-    // Função auxiliar para formatar o primeiro nome
     function formatarPrimeiroNome(nomeCompleto) {
         if (!nomeCompleto) return '-';
         let primeiroNome = nomeCompleto.trim().split(' ')[0];
@@ -264,7 +331,7 @@
         const tbody = document.querySelector(`#${tableId} tbody`);
         if (!tbody) return;
         if (dados.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5">Nenhum registro neste período.<\/td><\/tr>';
+            tbody.innerHTML = '<tr><td colspan="5">Nenhum registro neste período.</td></tr>';
             return;
         }
         let html = '';
@@ -283,11 +350,11 @@
             
             html += `
                 <tr>
-                    <td>${escapeHtml(nomeFormatado)}<\/td>
-                    <td>${telefoneHtml}<\/td>
-                    <td>${escapeHtml(item.cargo || '-')}<\/td>
-                    <td>${escapeHtml(item.empresa || '-')}<\/td>
-                    <td>${dataRespondido}<\/td>
+                    <td>${escapeHtml(nomeFormatado)}</td>
+                    <td>${telefoneHtml}</td>
+                    <td>${escapeHtml(item.cargo || '-')}</td>
+                    <td>${escapeHtml(item.empresa || '-')}</td>
+                    <td>${dataRespondido}</td>
                 </tr>
             `;
         }
@@ -296,17 +363,35 @@
 
     function escapeHtml(str) {
         if (!str) return '';
-        return str.replace(/[&<>]/g, m => (m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;')));
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
     }
 
     function setQuickFilter(tipo) {
         let start = null, end = new Date();
         end.setHours(23, 59, 59, 999);
         const now = new Date();
-        if (tipo === '24h') { start = new Date(); start.setDate(now.getDate() - 1); start.setHours(0,0,0,0); }
-        else if (tipo === '5d') { start = new Date(); start.setDate(now.getDate() - 5); start.setHours(0,0,0,0); }
-        else if (tipo === '7d') { start = new Date(); start.setDate(now.getDate() - 7); start.setHours(0,0,0,0); }
-        else if (tipo === '30d') { start = new Date(); start.setDate(now.getDate() - 30); start.setHours(0,0,0,0); }
+        if (tipo === '24h') {
+            start = new Date();
+            start.setDate(now.getDate() - 1);
+            start.setHours(0, 0, 0, 0);
+        } else if (tipo === '5d') {
+            start = new Date();
+            start.setDate(now.getDate() - 5);
+            start.setHours(0, 0, 0, 0);
+        } else if (tipo === '7d') {
+            start = new Date();
+            start.setDate(now.getDate() - 7);
+            start.setHours(0, 0, 0, 0);
+        } else if (tipo === '30d') {
+            start = new Date();
+            start.setDate(now.getDate() - 30);
+            start.setHours(0, 0, 0, 0);
+        }
         if (start) document.getElementById('startDate').value = start.toISOString().split('T')[0];
         document.getElementById('endDate').value = end.toISOString().split('T')[0];
         aplicarFiltro(start, end);
@@ -328,6 +413,6 @@
 
     document.getElementById('refreshBtn').addEventListener('click', () => carregarDados());
     carregarDados();
-<\/script>
-<\/body>
-<\/html>
+</script>
+</body>
+</html>
