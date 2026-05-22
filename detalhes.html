@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NR1 - Detalhes das Respostas</title>
     <style>
-        /* (mesmo estilo anterior) */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; }
         .container { max-width: 1400px; margin: 0 auto; }
@@ -75,11 +74,11 @@
     <div class="tables-container">
         <div class="table-wrapper">
             <div class="table-header"><h2>✅ Responderam SIM</h2><span id="simCount" class="pill">0</span></div>
-            <table id="tableSim"><thead><tr><th>Nome</th><th>Telefone</th><th>Cargo</th><th>Empresa</th><th>Respondido em</th></tr></thead><tbody><tr><td colspan="5" class="loading">Carregando...</td></tr></tbody></table>
+            <table id="tableSim"><thead><tr><th>Nome</th><th>Telefone</th><th>Template</th><th>Empresa</th><th>Respondido em</th></tr></thead><tbody><tr><td colspan="5" class="loading">Carregando...</td></tr></tbody></table>
         </div>
         <div class="table-wrapper">
             <div class="table-header"><h2>❌ Responderam NÃO</h2><span id="naoCount" class="pill">0</span></div>
-            <table id="tableNao"><thead><tr><th>Nome</th><th>Telefone</th><th>Cargo</th><th>Empresa</th><th>Respondido em</th></tr></thead><tbody><tr><td colspan="5" class="loading">Carregando...</td></tr></tbody></table>
+            <table id="tableNao"><thead><tr><th>Nome</th><th>Telefone</th><th>Template</th><th>Empresa</th><th>Respondido em</th></tr></thead><tbody><tr><td colspan="5" class="loading">Carregando...</td></tr></tbody></table>
         </div>
     </div>
     <footer>Dados atualizados a cada acesso | Filtro aplicado localmente no navegador</footer>
@@ -156,7 +155,7 @@
             const mensagemCodificada = encodeURIComponent(mensagem);
             const linkWhatsApp = telefoneLimpo ? `https://wa.me/${telefoneLimpo}?text=${mensagemCodificada}` : '#';
             const telefoneHtml = telefoneLimpo ? `<a href="${linkWhatsApp}" target="_blank" rel="noopener noreferrer" class="tel-button">${escapeHtml(telefone)}</a>` : escapeHtml(telefone) || '-';
-            html += `<tr><td>${escapeHtml(nomeFormatado)}</td><td>${telefoneHtml}</td><td>${escapeHtml(item.cargo || '-')}</td><td>${escapeHtml(item.empresa || '-')}</td><td>${dataRespondido}</td></tr>`;
+            html += `<tr><td>${escapeHtml(nomeFormatado)}</td><td>${telefoneHtml}</td><td>${escapeHtml(item.template_enviado || '-')}</td><td>${escapeHtml(item.empresa || '-')}</td><td>${dataRespondido}</td></tr>`;
         }
         tbody.innerHTML = html;
     }
