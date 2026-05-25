@@ -11,7 +11,7 @@
         .container { max-width: 1400px; margin: 0 auto; }
         .header-flex { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 10px; }
         .header-flex h1 { margin: 0; font-size: 1.5em; }
-        .nav-buttons { display: flex; gap: 10px; }
+        .nav-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
         .nav-buttons a {
             display: inline-block;
             background: #007bff;
@@ -23,6 +23,8 @@
             transition: background 0.2s;
         }
         .nav-buttons a:hover { background: #0056b3; }
+        .nav-buttons a.custo { background: #28a745; }
+        .nav-buttons a.custo:hover { background: #1e7e34; }
         .update-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 20px; }
         .last-update { color: #666; font-size: 0.9em; }
         .refresh-buttons button {
@@ -60,6 +62,7 @@
         <div class="nav-buttons">
             <a href="detalhes.html">📋 Ver detalhes (respostas)</a>
             <a href="falhas.html">⚠️ Ver falhas</a>
+            <a href="custo_envio_mensagem.html" class="custo">💰 Custos de envio</a>
         </div>
     </div>
     <div class="update-row">
@@ -85,7 +88,7 @@
 
     <div class="status-table">
         <h2>📲 Status das Mensagens (Agregado)</h2>
-        <table id="statusTable"><thead><tr><th>Status</th><th>Quantidade</th></tr></thead><tbody><tr><td colspan="2" class="loading">Carregando...</td></tr></tbody></table>
+        <table id="statusTable"><thead><tr><th>Status</th><th>Quantidade</th></tr></thead><tbody><tr><td colspan="2" class="loading">Carregando...</td></tr></tbody>
     </div>
     <footer>Dados atualizados a cada acesso | Fonte: n8n + PostgreSQL</footer>
 </div>
