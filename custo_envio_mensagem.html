@@ -30,9 +30,13 @@
         .card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .card h3 { color: #666; font-size: 14px; margin-bottom: 10px; }
         .card .value { font-size: 32px; font-weight: bold; color: #075E54; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-        .chart-container { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .chart-container h3 { margin-bottom: 15px; color: #333; }
+        .charts-row { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 30px; }
+        .chart-box { flex: 1; min-width: 280px; background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .chart-box h3 { margin-bottom: 15px; color: #333; border-left: 4px solid #075E54; padding-left: 10px; }
+        .chart-box canvas { max-height: 280px; width: 100%; }
+        .chart-box-half { flex: 0.5; min-width: 280px; }
+        .full-width { width: 100%; margin-bottom: 30px; }
+        .full-width canvas { max-height: 300px; }
         table { width: 100%; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         th { background: #075E54; color: white; padding: 12px; text-align: left; }
         td { padding: 10px 12px; border-bottom: 1px solid #eee; }
@@ -40,10 +44,12 @@
         .category.marketing { background: #FF6B6B; color: white; }
         .category.utility { background: #4ECDC4; color: white; }
         .category.authentication { background: #45B7D1; color: white; }
-        .category.service { background: #96CEB4; color: white; }
         .loading { text-align: center; padding: 50px; color: #555; }
+        @media (max-width: 900px) { 
+            .charts-row { flex-direction: column; }
+            .chart-box-half { flex: 1; }
+        }
         @media (max-width: 768px) { 
-            .grid-2 { grid-template-columns: 1fr; } 
             .header { flex-direction: column; text-align: center; }
             .header-right { text-align: center; margin-top: 10px; }
         }
@@ -63,17 +69,28 @@
     </div>
 
     <div class="cards" id="cards"><div class="card"><h3>💰 Carregando...</h3><div class="value">--</div></div></div>
-    <div class="grid-2">
-        <div class="chart-container"><h3>📈 Evolução Diária dos Custos</h3><canvas id="costChart"></canvas></div>
-        <div class="chart-container"><h3>🥧 Distribuição por Categoria</h3><canvas id="categoryChart"></canvas></div>
+    
+    <div class="charts-row">
+        <div class="chart-box">
+            <h3>📈 Evolução Diária dos Custos</h3>
+            <canvas id="costChart"></canvas>
+        </div>
+        <div class="chart-box chart-box-half">
+            <h3>🥧 Distribuição por Categoria</h3>
+            <canvas id="categoryChart" style="max-height: 250px;"></canvas>
+        </div>
     </div>
-    <div class="chart-container" style="margin-bottom: 30px;">
-        <h3>📊 Mensagens por Categoria</h3>
-        <canvas id="volumeChart" height="100"></canvas>
+    
+    <div class="full-width">
+        <div class="chart-box">
+            <h3>📊 Mensagens por Categoria</h3>
+            <canvas id="volumeChart"></canvas>
+        </div>
     </div>
+    
     <table>
         <thead><tr><th>Data</th><th>Categoria</th><th>Quantidade</th><th>Custo Total</th></tr></thead>
-        <tbody id="tableBody"><tr><td colspan="4" class="loading">Carregando dados...</td></tr>
+        <tbody id="tableBody"><tr><td colspan="4" class="loading">Carregando dados...</td></tr></tbody>
     </table>
 </div>
 
@@ -113,26 +130,24 @@
 
     function updateCharts(custos) {
         const dias = custos.por_dia || [];
-        if (dias.length === 0) {
-            if (chartCost) chartCost.destroy();
-            if (chartCategory) chartCategory.destroy();
-            if (chartVolume) chartVolume.destroy();
-            return;
-        }
         
-        const labels = [...new Set(dias.map(d => d.data_referencia))].sort().reverse();
-        const marketing = labels.map(d => dias.find(x => x.data_referencia === d && x.categoria === 'marketing')?.custo_total || 0);
-        const utility = labels.map(d => dias.find(x => x.data_referencia === d && x.categoria === 'utility')?.custo_total || 0);
-        const auth = labels.map(d => dias.find(x => x.data_referencia === d && x.categoria === 'authentication')?.custo_total || 0);
+        // Gráfico de linha (Evolução Diária)
+        if (dias.length > 0) {
+            const labels = [...new Set(dias.map(d => d.data_referencia))].sort().reverse();
+            const marketing = labels.map(d => dias.find(x => x.data_referencia === d && x.categoria === 'marketing')?.custo_total || 0);
+            const utility = labels.map(d => dias.find(x => x.data_referencia === d && x.categoria === 'utility')?.custo_total || 0);
+            const auth = labels.map(d => dias.find(x => x.data_referencia === d && x.categoria === 'authentication')?.custo_total || 0);
 
-        if (chartCost) chartCost.destroy();
-        const ctx = document.getElementById('costChart').getContext('2d');
-        chartCost = new Chart(ctx, { type: 'line', data: { labels, datasets: [
-            { label: 'Marketing', data: marketing, borderColor: '#FF6B6B', backgroundColor: 'rgba(255,107,107,0.1)', fill: true, tension: 0.3 },
-            { label: 'Utilidade', data: utility, borderColor: '#4ECDC4', backgroundColor: 'rgba(78,205,196,0.1)', fill: true, tension: 0.3 },
-            { label: 'Autenticação', data: auth, borderColor: '#45B7D1', backgroundColor: 'rgba(69,183,209,0.1)', fill: true, tension: 0.3 }
-        ]}, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } } } });
+            if (chartCost) chartCost.destroy();
+            const ctx = document.getElementById('costChart').getContext('2d');
+            chartCost = new Chart(ctx, { type: 'line', data: { labels, datasets: [
+                { label: 'Marketing', data: marketing, borderColor: '#FF6B6B', backgroundColor: 'rgba(255,107,107,0.1)', fill: true, tension: 0.3 },
+                { label: 'Utilidade', data: utility, borderColor: '#4ECDC4', backgroundColor: 'rgba(78,205,196,0.1)', fill: true, tension: 0.3 },
+                { label: 'Autenticação', data: auth, borderColor: '#45B7D1', backgroundColor: 'rgba(69,183,209,0.1)', fill: true, tension: 0.3 }
+            ]}, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } } } });
+        }
 
+        // Gráfico de pizza (Distribuição por Categoria) - reduzido
         const porCat = custos.por_categoria || {};
         if (chartCategory) chartCategory.destroy();
         const ctx2 = document.getElementById('categoryChart').getContext('2d');
@@ -141,22 +156,34 @@
             datasets: [{ data: [porCat.marketing || 0, porCat.utility || 0, porCat.authentication || 0], 
                         backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1'],
                         borderWidth: 0 }] 
-        }, options: { responsive: true, maintainAspectRatio: true } });
+        }, options: { 
+            responsive: true, 
+            maintainAspectRatio: true,
+            plugins: { 
+                legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+                tooltip: { callbacks: { label: (ctx) => `${ctx.label}: R$ ${ctx.raw.toFixed(2)}` } }
+            }
+        } });
 
-        const volumes = { marketing: [], utility: [], authentication: [] };
-        labels.forEach(d => {
-            volumes.marketing.push(dias.find(x => x.data_referencia === d && x.categoria === 'marketing')?.quantidade || 0);
-            volumes.utility.push(dias.find(x => x.data_referencia === d && x.categoria === 'utility')?.quantidade || 0);
-            volumes.authentication.push(dias.find(x => x.data_referencia === d && x.categoria === 'authentication')?.quantidade || 0);
-        });
-        if (chartVolume) chartVolume.destroy();
-        const ctx3 = document.getElementById('volumeChart').getContext('2d');
-        chartVolume = new Chart(ctx3, { type: 'bar', data: { labels, datasets: [
-            { label: 'Marketing', data: volumes.marketing, backgroundColor: '#FF6B6B', borderRadius: 4 },
-            { label: 'Utilidade', data: volumes.utility, backgroundColor: '#4ECDC4', borderRadius: 4 },
-            { label: 'Autenticação', data: volumes.authentication, backgroundColor: '#45B7D1', borderRadius: 4 }
-        ]}, options: { responsive: true, maintainAspectRatio: true, 
-            scales: { x: { stacked: true }, y: { stacked: true, title: { display: true, text: 'Quantidade de Mensagens' } } } } });
+        // Gráfico de barras (Mensagens por Categoria)
+        if (dias.length > 0) {
+            const labels = [...new Set(dias.map(d => d.data_referencia))].sort().reverse();
+            const volumes = { marketing: [], utility: [], authentication: [] };
+            labels.forEach(d => {
+                volumes.marketing.push(dias.find(x => x.data_referencia === d && x.categoria === 'marketing')?.quantidade || 0);
+                volumes.utility.push(dias.find(x => x.data_referencia === d && x.categoria === 'utility')?.quantidade || 0);
+                volumes.authentication.push(dias.find(x => x.data_referencia === d && x.categoria === 'authentication')?.quantidade || 0);
+            });
+            if (chartVolume) chartVolume.destroy();
+            const ctx3 = document.getElementById('volumeChart').getContext('2d');
+            chartVolume = new Chart(ctx3, { type: 'bar', data: { labels, datasets: [
+                { label: 'Marketing', data: volumes.marketing, backgroundColor: '#FF6B6B', borderRadius: 4 },
+                { label: 'Utilidade', data: volumes.utility, backgroundColor: '#4ECDC4', borderRadius: 4 },
+                { label: 'Autenticação', data: volumes.authentication, backgroundColor: '#45B7D1', borderRadius: 4 }
+            ]}, options: { responsive: true, maintainAspectRatio: true, 
+                scales: { x: { stacked: true, ticks: { maxRotation: 45, minRotation: 45 } }, 
+                          y: { stacked: true, title: { display: true, text: 'Quantidade de Mensagens' } } } } });
+        }
     }
 
     function updateTable(dados) {
