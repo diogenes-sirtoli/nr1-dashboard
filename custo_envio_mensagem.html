@@ -12,8 +12,18 @@
         .header { background: linear-gradient(135deg, #075E54, #128C7E); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
         .header h1 { font-size: 24px; }
         .nav-buttons { margin-bottom: 15px; }
-        .nav-buttons a { display: inline-block; background: #6c757d; color: white; padding: 8px 16px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-right: 10px; }
-        .nav-buttons a:hover { background: #5a6268; }
+        .nav-buttons a { 
+            display: inline-block; 
+            background: #007bff; 
+            color: white; 
+            padding: 8px 16px; 
+            text-decoration: none; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            margin-right: 10px;
+            transition: background 0.2s;
+        }
+        .nav-buttons a:hover { background: #0056b3; }
         .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .card h3 { color: #666; font-size: 14px; margin-bottom: 10px; }
@@ -28,18 +38,23 @@
         .category.marketing { background: #FF6B6B; color: white; }
         .category.utility { background: #4ECDC4; color: white; }
         .category.authentication { background: #45B7D1; color: white; }
+        .category.service { background: #96CEB4; color: white; }
         .loading { text-align: center; padding: 50px; color: #555; }
+        .last-update { text-align: right; font-size: 0.85em; color: #ccc; margin-top: 10px; }
         @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="nav-buttons">
-        <a href="detalhes.html">◀ Voltar para Detalhes</a>
+        <a href="index.html">📊 ◀ Voltar para Dashboard</a>
+        <a href="detalhes.html">📋 Detalhes das respostas</a>
+        <a href="falhas.html">⚠️ Falhas de entrega</a>
     </div>
     <div class="header">
-        <h1>📊 Métricas de Custo - WhatsApp NR1</h1>
-        <p>Última atualização: <span id="lastUpdate">--</span></p>
+        <h1>💰 Métricas de Custo - WhatsApp NR1</h1>
+        <p>Baseado nos dados de faturamento da Meta (WABA)</p>
+        <div class="last-update">Última atualização: <span id="lastUpdate">--</span></div>
     </div>
     <div class="cards" id="cards"><div class="card"><h3>💰 Carregando...</h3><div class="value">--</div></div></div>
     <div class="grid-2">
@@ -57,9 +72,7 @@
 </div>
 
 <script>
-    // URL DO SEU WEBHOOK REAL - mesma do detalhes.html
     const API_URL = 'https://testes-api-n8n-dev.nicehill-2119d736.brazilsouth.azurecontainerapps.io/webhook/nr1-dashboard-data';
-    
     let chartCost, chartCategory, chartVolume;
 
     async function loadData() {
@@ -67,10 +80,7 @@
             const response = await fetch(API_URL);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
-            
-            // Acessa os dados corretamente - resultado.custos
-            const resultado = data.resultado;
-            const custos = resultado.custos || { total_periodo: 0, por_categoria: {}, por_dia: [] };
+            const custos = data.resultado.custos || { total_periodo: 0, por_categoria: {}, por_dia: [] };
             
             document.getElementById('lastUpdate').innerText = new Date().toLocaleString('pt-BR');
             updateCards(custos);
@@ -97,9 +107,14 @@
 
     function updateCharts(custos) {
         const dias = custos.por_dia || [];
-        if (dias.length === 0) return;
+        if (dias.length === 0) {
+            if (chartCost) chartCost.destroy();
+            if (chartCategory) chartCategory.destroy();
+            if (chartVolume) chartVolume.destroy();
+            return;
+        }
         
-        const labels = [...new Set(dias.map(d => d.data_referencia))].reverse();
+        const labels = [...new Set(dias.map(d => d.data_referencia))].sort().reverse();
         const marketing = labels.map(d => dias.find(x => x.data_referencia === d && x.categoria === 'marketing')?.custo_total || 0);
         const utility = labels.map(d => dias.find(x => x.data_referencia === d && x.categoria === 'utility')?.custo_total || 0);
         const auth = labels.map(d => dias.find(x => x.data_referencia === d && x.categoria === 'authentication')?.custo_total || 0);
