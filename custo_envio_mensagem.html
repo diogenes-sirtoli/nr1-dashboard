@@ -27,9 +27,195 @@
         .btn-dashboard:hover { background: #0056b3; }
         .last-update { font-size: 0.85em; color: #ccc; margin-top: 8px; }
         .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: relative; }
         .card h3 { color: #666; font-size: 14px; margin-bottom: 10px; }
         .card .value { font-size: 32px; font-weight: bold; color: #075E54; }
+        
+        /* Card com ícone de informação */
+        .card-info-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .card-info-header h3 {
+            margin-bottom: 0;
+        }
+        .info-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #e8f5e9;
+            color: #075E54;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.2s;
+            border: none;
+        }
+        .info-icon:hover {
+            background: #075E54;
+            color: white;
+            transform: scale(1.05);
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(3px);
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 550px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            animation: modalSlideIn 0.3s ease;
+        }
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .modal-header {
+            background: linear-gradient(135deg, #075E54, #128C7E);
+            color: white;
+            padding: 20px 24px;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h2 {
+            font-size: 20px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .modal-header h2::before {
+            content: "💰";
+            font-size: 24px;
+        }
+        .close-modal {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .close-modal:hover {
+            background: rgba(255,255,255,0.4);
+            transform: scale(1.1);
+        }
+        .modal-body {
+            padding: 24px;
+        }
+        .info-badge {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .info-badge::before {
+            content: "📌";
+        }
+        .info-section {
+            margin-bottom: 24px;
+            border-left: 3px solid #4ECDC4;
+            padding-left: 16px;
+        }
+        .info-section h4 {
+            color: #075E54;
+            font-size: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .info-section p {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+        .info-section ul {
+            margin: 8px 0 0 20px;
+            color: #555;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .info-section li {
+            margin-bottom: 6px;
+        }
+        .category-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        .category-tag.marketing { background: #FF6B6B20; color: #FF6B6B; border: 1px solid #FF6B6B40; }
+        .category-tag.utility { background: #4ECDC420; color: #2c9c94; border: 1px solid #4ECDC440; }
+        .category-tag.authentication { background: #45B7D120; color: #2c7a8c; border: 1px solid #45B7D140; }
+        .highlight-box {
+            background: #f0f7ff;
+            border-radius: 12px;
+            padding: 16px;
+            margin: 20px 0;
+            border: 1px solid #c5e0f5;
+        }
+        .highlight-box p {
+            margin: 0;
+            color: #1a5a8c;
+            font-size: 14px;
+        }
+        .modal-footer {
+            background: #f8f9fa;
+            padding: 16px 24px;
+            border-radius: 0 0 20px 20px;
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+            border-top: 1px solid #eee;
+        }
+        
         .charts-row { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 30px; }
         .chart-box { flex: 1; min-width: 280px; background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .chart-box h3 { margin-bottom: 15px; color: #333; border-left: 4px solid #075E54; padding-left: 10px; }
@@ -90,8 +276,62 @@
     
     <table>
         <thead><tr><th>Data</th><th>Categoria</th><th>Quantidade</th><th>Custo Total</th></tr></thead>
-        <tbody id="tableBody"><tr><td colspan="4" class="loading">Carregando dados...</td></tr></tbody>
+        <tbody id="tableBody"><tr><td colspan="4" class="loading">Carregando dados...</td></tr>
+        </tbody>
     </table>
+</div>
+
+<!-- Modal Informativo -->
+<div id="infoModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>💰 Como funciona a cobrança?</h2>
+            <button class="close-modal" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="info-badge">
+                Você só é cobrado por mensagens que são efetivamente entregues
+            </div>
+            
+            <div class="info-section">
+                <h4>✅ Cobrança por Entrega</h4>
+                <p>A Plataforma do WhatsApp Business utiliza um modelo de precificação baseado em <strong>mensagens entregues</strong>. Isso significa que a cobrança ocorre por cada mensagem que o seu negócio envia e que chega ao dispositivo do cliente.</p>
+                <p><strong>Importante:</strong> Se você enviar uma mensagem e ela falhar no envio ou não for entregue, <strong>não haverá cobrança</strong> por essa interação específica.</p>
+            </div>
+            
+            <div class="info-section">
+                <h4>🎯 Detalhes sobre a Cobrança</h4>
+                <ul>
+                    <li><strong>Entrega:</strong> A cobrança é acionada apenas quando a mensagem é marcada como entregue.</li>
+                    <li><strong>Categorias:</strong> O valor cobrado depende da categoria da mensagem (marketing, utilidade ou autenticação) e do código do país do destinatário.</li>
+                    <li><strong>Janela de Serviço:</strong> Mensagens de serviço (respostas livres) enviadas dentro de uma janela de 24 horas após uma mensagem do cliente não possuem custo.</li>
+                    <li><strong>Ponto de Entrada Gratuito:</strong> Se um cliente inicia uma conversa através de um botão de ação em uma Página do Facebook ou um anúncio que clica para o WhatsApp, abre-se uma janela de 72 horas onde as mensagens enviadas não são cobradas.</li>
+                </ul>
+            </div>
+            
+            <div class="highlight-box">
+                <p><strong>ℹ️ Entenda as Categorias de Templates</strong><br>
+                A cobrança de um template depende da categoria final aprovada e do conteúdo da mensagem enviada. Se o seu template foi classificado como marketing, mas cobrado como utilidade, isso geralmente ocorre devido ao sistema de categorização automática da Meta, que analisa o conteúdo para garantir que a cobrança seja justa de acordo com a finalidade da mensagem.</p>
+            </div>
+            
+            <div class="info-section">
+                <h4>📋 Categorias de Templates</h4>
+                <ul>
+                    <li><span class="category-tag marketing">Marketing</span> São os mais flexíveis e incluem promoções, ofertas, mensagens de boas-vindas ou qualquer conteúdo que não se encaixe estritamente em utilidade ou autenticação. Se um template misturar conteúdo de utilidade e marketing, ele será classificado como marketing.</li>
+                    <li><span class="category-tag utility">Utilidade (Utility)</span> Relacionam-se a transações específicas já acordadas, como confirmações de pedidos, atualizações de envio, lembretes de consultas ou extratos de cobrança.</li>
+                    <li><span class="category-tag authentication">Autenticação</span> Usados apenas para enviar códigos de acesso únicos (OTP).</li>
+                </ul>
+            </div>
+            
+            <div class="info-section">
+                <h4>🔄 Por que a cobrança pode variar?</h4>
+                <p>O sistema da Meta pode reclassificar ou cobrar um template de forma diferente se identificar que o uso real da mensagem se alinha mais a outra categoria. Por exemplo, se um template de marketing for usado exclusivamente para enviar atualizações transacionais de utilidade, ele pode ser processado sob essa tarifa. Além disso, a cobrança é baseada na primeira mensagem que inicia a conversa em uma janela de 24 horas.</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            Informações baseadas na política de precificação da Meta (WhatsApp Business API)
+        </div>
+    </div>
 </div>
 
 <script>
@@ -120,7 +360,13 @@
         const total = custos.total_periodo || 0;
         const porCat = custos.por_categoria || {};
         const html = `
-            <div class="card"><h3>💰 Custo Total (30 dias)</h3><div class="value">R$ ${total.toFixed(2)}</div></div>
+            <div class="card">
+                <div class="card-info-header">
+                    <h3>💰 Custo Total (30 dias)</h3>
+                    <button class="info-icon" onclick="openModal()" title="Como funciona a cobrança?">ⓘ</button>
+                </div>
+                <div class="value">R$ ${total.toFixed(2)}</div>
+            </div>
             <div class="card"><h3>📢 Marketing</h3><div class="value">R$ ${(porCat.marketing || 0).toFixed(2)}</div></div>
             <div class="card"><h3>🔧 Utilidade</h3><div class="value">R$ ${(porCat.utility || 0).toFixed(2)}</div></div>
             <div class="card"><h3>🔐 Autenticação</h3><div class="value">R$ ${(porCat.authentication || 0).toFixed(2)}</div></div>
@@ -201,6 +447,37 @@
             </tr>
         `).join('');
     }
+
+    // Modal functions
+    function openModal() {
+        const modal = document.getElementById('infoModal');
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeModal() {
+        const modal = document.getElementById('infoModal');
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    
+    // Fechar modal ao clicar fora do conteúdo
+    window.onclick = function(event) {
+        const modal = document.getElementById('infoModal');
+        if (event.target === modal) {
+            closeModal();
+        }
+    }
+    
+    // Fechar modal com tecla ESC
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            const modal = document.getElementById('infoModal');
+            if (modal.classList.contains('active')) {
+                closeModal();
+            }
+        }
+    });
 
     loadData();
     setInterval(loadData, 60000);
