@@ -1,35 +1,18 @@
-// Substitua a função carregarDados() por esta:
-
-async function carregarDados() {
-    try {
-        const response = await fetch(API_URL);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        const resultado = data.resultado;
-        
-        // Falhas
-        dadosFalhas = resultado.lista_falhas || [];
-        
-        // AGORA USA AS LISTAS CORRETAS DA API
-        dadosLgpd = resultado.lista_lgpd || [];
-        dadosRetry = resultado.lista_retry || [];
-        dadosSemWhatsapp = resultado.lista_sem_whatsapp || [];
-        
-        dadosCarregados = true;
-        const atualizado = new Date().toLocaleString('pt-BR');
-        document.getElementById('last-update').innerHTML = `Última atualização: ${atualizado}`;
-        
-        atualizarTodasTabelas();
-    } catch (error) {
-        document.getElementById('last-update').innerHTML = 'Erro ao carregar dados';
-        console.error('Erro:', error);
-        // Dados de exemplo para teste (remova depois que funcionar)
-        dadosLgpd = [
-            { nome: "Maria Silva", telefone: "5511999999999", cargo: "Analista", empresa: "Empresa ABC", bloqueio_envio: "LGPD", bloqueio_em: new Date().toISOString() }
-        ];
-        dadosRetry = [
-            { nome: "João Souza", telefone: "5511888888888", cargo: "Gerente", empresa: "Empresa XYZ", envios_count: 4, bloqueio_envio: "RETRY", bloqueio_em: new Date().toISOString() }
-        ];
-        atualizarTodasTabelas();
-    }
-}
+'lista_lgpd', (SELECT COALESCE(json_agg(row_to_json(l)), '[]'::json) FROM (
+    SELECT nome, telefone, cargo, empresa, bloqueio_envio, bloqueio_em
+    FROM testes_api.nr1_campanha
+    WHERE bloqueio_envio = 'LGPD'
+    ORDER BY bloqueio_em DESC NULLS LAST
+) l),
+'lista_retry', (SELECT COALESCE(json_agg(row_to_json(r)), '[]'::json) FROM (
+    SELECT nome, telefone, cargo, empresa, envios_count, bloqueio_envio, bloqueio_em
+    FROM testes_api.nr1_campanha
+    WHERE bloqueio_envio = 'RETRY'
+    ORDER BY bloqueio_em DESC NULLS LAST
+) r),
+'lista_sem_whatsapp', (SELECT COALESCE(json_agg(row_to_json(w)), '[]'::json) FROM (
+    SELECT nome, telefone, cargo, empresa, status_whatsapp, validado_em
+    FROM testes_api.nr1_campanha
+    WHERE status_whatsapp = 'NAO_WHATSAPP' OR status_whatsapp = 'INVALIDO'
+    ORDER BY validado_em DESC NULLS LAST
+) w)
