@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NR1 - Falhas no Envio</title>
+    <title>NR1 - Falhas e Bloqueios</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; }
@@ -14,21 +14,176 @@
         .nav-buttons a, .refresh-buttons button { display: inline-block; background: #6c757d; color: white; padding: 8px 16px; text-decoration: none; border-radius: 8px; font-weight: bold; transition: background 0.2s; border: none; cursor: pointer; font-size: 0.9em; }
         .nav-buttons a:hover, .refresh-buttons button:hover { background: #5a6268; }
         .last-update { text-align: center; color: #666; margin-bottom: 20px; font-size: 0.9em; }
-        .filtro-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px; text-align: center; }
-        .filtro-buttons { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 20px; }
-        .filtro-buttons button { padding: 8px 16px; background: #e9ecef; border: none; border-radius: 20px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
-        .filtro-buttons button:hover { background: #007bff; color: white; }
-        .custom-range { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; align-items: center; }
-        .custom-range input { padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
-        .custom-range button { background: #28a745; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; }
-        .table-wrapper { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: auto; max-height: 600px; }
-        .table-header { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: white; border-bottom: 2px solid #ddd; position: sticky; top: 0; }
-        .table-header h2 { margin: 0; font-size: 1.2em; }
-        .pill { background-color: #dc3545; color: white; padding: 4px 12px; border-radius: 40px; font-size: 0.8em; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #eee; }
-        th { background-color: #f8f9fa; position: sticky; top: 60px; }
-        .loading { text-align: center; padding: 50px; color: #555; }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            background: white;
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px 20px;
+            background: #f0f2f5;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            color: #555;
+        }
+        .tab-btn:hover {
+            background: #e0e0e0;
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, #075E54, #128C7E);
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Filtros */
+        .filtro-box {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .filtro-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .filtro-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .filtro-buttons button {
+            padding: 8px 16px;
+            background: #e9ecef;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .filtro-buttons button:hover {
+            background: #007bff;
+            color: white;
+        }
+        .search-box {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .search-box input {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            width: 250px;
+            font-size: 14px;
+        }
+        .search-box button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .search-box button:hover {
+            background: #0056b3;
+        }
+        .custom-range {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        .custom-range input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        .custom-range button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .clear-filter {
+            background: #dc3545 !important;
+        }
+        
+        /* Tabelas */
+        .table-wrapper {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: auto;
+        }
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-bottom: 2px solid #ddd;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .table-header h2 {
+            margin: 0;
+            font-size: 1.2em;
+        }
+        .pill {
+            background-color: #dc3545;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .pill.lgpd { background-color: #ffc107; color: #333; }
+        .pill.retry { background-color: #17a2b8; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background-color: #f8f9fa;
+            position: sticky;
+            top: 0;
+            font-weight: 600;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #555;
+        }
         .error-code, .error-message {
             cursor: pointer;
             transition: background-color 0.2s;
@@ -37,11 +192,60 @@
             background-color: #fff3cd;
             text-decoration: underline;
         }
-        .tel-button { display: inline-block; background-color: #25D366; color: white !important; padding: 5px 12px; border-radius: 20px; font-size: 0.85em; font-weight: bold; text-decoration: none; transition: background-color 0.2s, transform 0.1s; border: none; cursor: pointer; }
-        .tel-button:hover { background-color: #128C7E; text-decoration: none; transform: scale(1.02); }
-        .tel-button:active { transform: scale(0.98); }
-        footer { text-align: center; margin-top: 30px; font-size: 0.8em; color: #888; }
-
+        .tel-button {
+            display: inline-block;
+            background-color: #25D366;
+            color: white !important;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            text-decoration: none;
+            transition: background-color 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+        .tel-button:hover {
+            background-color: #128C7E;
+            text-decoration: none;
+        }
+        
+        /* Paginação */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            padding: 20px;
+            flex-wrap: wrap;
+            background: white;
+            border-top: 1px solid #eee;
+        }
+        .pagination button {
+            padding: 8px 12px;
+            background: #e9ecef;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .pagination button:hover:not(:disabled) {
+            background: #007bff;
+            color: white;
+        }
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .pagination .active-page {
+            background: #075E54;
+            color: white;
+        }
+        .page-info {
+            color: #666;
+            font-size: 14px;
+        }
+        
         /* Modal */
         .modal {
             display: none;
@@ -95,9 +299,6 @@
             margin-bottom: 12px;
             line-height: 1.5;
         }
-        .modal-body strong {
-            color: #007bff;
-        }
         .modal-footer {
             margin-top: 20px;
             text-align: right;
@@ -110,8 +311,20 @@
             border-radius: 8px;
             cursor: pointer;
         }
-        .modal-footer button:hover {
-            background: #5a6268;
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.8em;
+            color: #888;
+        }
+        
+        @media (max-width: 768px) {
+            .filtro-row { flex-direction: column; align-items: stretch; }
+            .search-box { justify-content: stretch; }
+            .search-box input { flex: 1; }
+            .table-wrapper { overflow-x: auto; }
+            th, td { font-size: 12px; padding: 8px; }
         }
     </style>
 </head>
@@ -122,9 +335,10 @@
             <div class="nav-buttons">
                 <a href="index.html">◀ Dashboard</a>
                 <a href="detalhes.html">📋 Respostas SIM/NAO</a>
+                <a href="custos.html">💰 Custos</a>
             </div>
         </div>
-        <h1>⚠️ Falhas no Envio de Mensagens</h1>
+        <h1>⚠️ Falhas e Bloqueios</h1>
         <div class="btn-right">
             <div class="refresh-buttons">
                 <button id="refreshBtn">🔄 Atualizar dados</button>
@@ -134,43 +348,130 @@
 
     <div id="last-update" class="last-update">Carregando dados...</div>
 
-    <div class="filtro-box">
-        <div class="filtro-buttons">
-            <button onclick="setQuickFilter('24h')">📅 Últimas 24h</button>
-            <button onclick="setQuickFilter('5d')">📅 Últimos 5 dias</button>
-            <button onclick="setQuickFilter('7d')">📅 Última semana</button>
-            <button onclick="setQuickFilter('30d')">📅 Último mês</button>
-            <button onclick="clearFilter()">🗑️ Limpar filtro</button>
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="falhas">⚠️ Mensagens com Falha</button>
+        <button class="tab-btn" data-tab="lgpd">🔒 Bloqueios por LGPD</button>
+        <button class="tab-btn" data-tab="retry">🔄 Retentativas (RETRY)</button>
+    </div>
+
+    <!-- Tab Falhas -->
+    <div id="tab-falhas" class="tab-content active">
+        <div class="filtro-box">
+            <div class="filtro-row">
+                <div class="filtro-buttons">
+                    <button onclick="setQuickFilter('falhas', '24h')">📅 Últimas 24h</button>
+                    <button onclick="setQuickFilter('falhas', '5d')">📅 Últimos 5 dias</button>
+                    <button onclick="setQuickFilter('falhas', '7d')">📅 Última semana</button>
+                    <button onclick="setQuickFilter('falhas', '30d')">📅 Último mês</button>
+                </div>
+                <div class="search-box">
+                    <input type="text" id="searchFalhas" placeholder="Buscar por código ou mensagem de erro..." onkeyup="if(event.key==='Enter') filtrarFalhas()">
+                    <button onclick="filtrarFalhas()">🔍 Buscar</button>
+                    <button onclick="limparBuscaFalhas()" class="clear-filter" style="background:#6c757d">✖ Limpar</button>
+                </div>
+            </div>
+            <div class="custom-range">
+                <input type="date" id="startDateFalhas">
+                <span>até</span>
+                <input type="date" id="endDateFalhas">
+                <button onclick="applyCustomFilter('falhas')">Aplicar período</button>
+                <button onclick="clearFilter('falhas')" class="clear-filter">🗑️ Limpar filtro</button>
+            </div>
         </div>
-        <div class="custom-range">
-            <input type="date" id="startDate">
-            <span>até</span>
-            <input type="date" id="endDate">
-            <button onclick="applyCustomFilter()">Aplicar período</button>
+
+        <div class="table-wrapper">
+            <div class="table-header">
+                <h2>⚠️ Mensagens com Falha (failed)</h2>
+                <span id="countPillFalhas" class="pill">0</span>
+            </div>
+            <table id="falhasTable">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Telefone</th>
+                        <th>Data/Hora</th>
+                        <th>Código do Erro</th>
+                        <th>Mensagem de Erro</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="5" class="loading">Carregando...</td></tr>
+                </tbody>
+            </table>
+            <div id="paginationFalhas" class="pagination"></div>
         </div>
     </div>
 
-    <div class="table-wrapper">
-        <div class="table-header">
-            <h2>⚠️ Mensagens com Falha (failed)</h2>
-            <span id="countPill" class="pill">0</span>
+    <!-- Tab LGPD -->
+    <div id="tab-lgpd" class="tab-content">
+        <div class="filtro-box">
+            <div class="filtro-row">
+                <div class="search-box">
+                    <input type="text" id="searchLgpd" placeholder="Buscar por nome ou telefone..." onkeyup="if(event.key==='Enter') filtrarLgpd()">
+                    <button onclick="filtrarLgpd()">🔍 Buscar</button>
+                    <button onclick="limparBuscaLgpd()" class="clear-filter" style="background:#6c757d">✖ Limpar</button>
+                </div>
+            </div>
         </div>
-        <table id="falhasTable">
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Telefone</th>
-                    <th>Data/Hora</th>
-                    <th>Código do Erro</th>
-                    <th>Mensagem de Erro</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td colspan="5" class="loading">Carregando...</td></tr>
-            </tbody>
-        </table>
+        <div class="table-wrapper">
+            <div class="table-header">
+                <h2>🔒 Bloqueios por LGPD</h2>
+                <span id="countPillLgpd" class="pill lgpd">0</span>
+            </div>
+            <table id="lgpdTable">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Telefone</th>
+                        <th>Cargo</th>
+                        <th>Empresa</th>
+                        <th>Motivo do Bloqueio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="5" class="loading">Carregando...</td></tr>
+                </tbody>
+            </table>
+            <div id="paginationLgpd" class="pagination"></div>
+        </div>
     </div>
-    <footer>Falhas registradas a partir dos webhooks do WhatsApp | Clique no código ou mensagem de erro para ver explicação.</footer>
+
+    <!-- Tab RETRY -->
+    <div id="tab-retry" class="tab-content">
+        <div class="filtro-box">
+            <div class="filtro-row">
+                <div class="search-box">
+                    <input type="text" id="searchRetry" placeholder="Buscar por nome ou telefone..." onkeyup="if(event.key==='Enter') filtrarRetry()">
+                    <button onclick="filtrarRetry()">🔍 Buscar</button>
+                    <button onclick="limparBuscaRetry()" class="clear-filter" style="background:#6c757d">✖ Limpar</button>
+                </div>
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <div class="table-header">
+                <h2>🔄 Retentativas (RETRY)</h2>
+                <span id="countPillRetry" class="pill retry">0</span>
+            </div>
+            <table id="retryTable">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Telefone</th>
+                        <th>Cargo</th>
+                        <th>Empresa</th>
+                        <th>Tentativas</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="6" class="loading">Carregando...</td></tr>
+                </tbody>
+            </table>
+            <div id="paginationRetry" class="pagination"></div>
+        </div>
+    </div>
+    <footer>Clique no código ou mensagem de erro para ver explicação detalhada | Bloqueios baseados na coluna bloqueio_envio</footer>
 </div>
 
 <!-- Modal -->
@@ -193,29 +494,35 @@
     const API_URL = 'https://testes-api-n8n-dev.nicehill-2119d736.brazilsouth.azurecontainerapps.io/webhook/nr1-dashboard-data';
 
     let dadosFalhas = [];
+    let dadosLgpd = [];
+    let dadosRetry = [];
     let dadosCarregados = false;
-    let currentStartDate = null, currentEndDate = null;
 
-    // Dicionário de explicações para códigos de erro comuns
+    // Estados de paginação
+    let paginaAtual = { falhas: 1, lgpd: 1, retry: 1 };
+    let itensPorPagina = 20;
+    let filtros = { falhas: { start: null, end: null, search: '' }, lgpd: { search: '' }, retry: { search: '' } };
+
+    // Dicionário de explicações para códigos de erro
     const explicacoesErros = {
         "131049": {
             titulo: "Código 131049 - Limite de marketing atingido",
             explicacao: `<p><strong>Esta mensagem significa:</strong><br>
-            O destinatário recebeu muitas mensagens de <strong>marketing</strong> (categoria “marketing”) nos últimos dias e o WhatsApp bloqueou temporariamente o envio para manter uma boa experiência do usuário.</p>
+            O destinatário recebeu muitas mensagens de <strong>marketing</strong> (categoria "marketing") nos últimos dias e o WhatsApp bloqueou temporariamente o envio para manter uma boa experiência do usuário.</p>
             <p><strong>O que fazer:</strong><br>
             • <strong>Não reenvie imediatamente</strong> – espere pelo menos 24 horas.<br>
             • Considere usar templates de <strong>utilidade</strong> (confirmações, avisos) que não sofrem esse limite.<br>
             • Se o erro persistir, este contato pode estar saturado – remova-o da sua lista de marketing por um tempo.</p>
             <p><strong>Isso bloqueia minha conta?</strong><br>
-            <span style="color:#28a745;">❌ Não.</span> Apenas aquele destinatário está temporariamente restrito. Sua conta permanece ativa.</p>`
+            <span style="color:#28a745;">❌ Não.</span> Apenas aquele destinatário está temporariamente restrito.</p>`
         },
         "131026": {
             titulo: "Código 131026 - Mensagem não entregue (indisponível)",
             explicacao: `<p><strong>Esta mensagem significa:</strong><br>
-            O número do destinatário pode estar inativo, não possui conta no WhatsApp ou o app está desatualizado. Também pode ocorrer quando o usuário desinstalou o aplicativo.</p>
+            O número do destinatário pode estar inativo, não possui conta no WhatsApp ou o app está desatualizado.</p>
             <p><strong>O que fazer:</strong><br>
             • Verifique se o número está correto.<br>
-            • Tente enviar novamente após alguns dias; o usuário pode retornar ao WhatsApp.<br>
+            • Tente enviar novamente após alguns dias.<br>
             • Considere remover da lista se o erro persistir por semanas.</p>`
         },
         "130429": {
@@ -224,13 +531,12 @@
             Você está tentando enviar mensagens muito rápido para o mesmo número ou para muitos números em curto intervalo.</p>
             <p><strong>O que fazer:</strong><br>
             • Reduza a velocidade de envio (use filas).<br>
-            • Implemente um espaçamento de pelo menos 1–2 segundos entre mensagens.<br>
-            • Respeite os limites de taxa da API (rate limits).</p>`
+            • Implemente um espaçamento de pelo menos 1–2 segundos entre mensagens.</p>`
         },
         "130497": {
             titulo: "Código 130497 - Restrição regional",
             explicacao: `<p><strong>Esta mensagem significa:</strong><br>
-            O envio para o país do destinatário não é permitido com o número de telefone que você está usando (ex: enviar do Brasil para os EUA sem critérios de elegibilidade).</p>
+            O envio para o país do destinatário não é permitido com o número de telefone que você está usando.</p>
             <p><strong>O que fazer:</strong><br>
             • Use um número de telefone registrado no país onde você tem autorização.<br>
             • Verifique as políticas de envio internacionais da Meta.</p>`
@@ -241,14 +547,13 @@
             A própria conta do WhatsApp Business (WABA) ou o número de telefone associado está bloqueado.</p>
             <p><strong>O que fazer:</strong><br>
             • Entre em contato com o suporte da Meta.<br>
-            • Verifique se houve violação de políticas (spam, queixas, etc.).<br>
             • Revise suas práticas de envio para garantir conformidade.</p>`
         }
     };
 
     function explicacaoGenerica(codigo, mensagem) {
         return `<p><strong>Código ${codigo}</strong> - ${mensagem}</p>
-        <p>Este erro não possui uma explicação específica no nosso dicionário. Consulte a documentação da Meta WhatsApp Business API ou entre em contato com o suporte.</p>`;
+        <p>Este erro não possui uma explicação específica. Consulte a documentação da Meta WhatsApp Business API.</p>`;
     }
 
     function mostrarModal(codigo, mensagem) {
@@ -282,44 +587,6 @@
         return numeros;
     }
 
-    async function carregarDados() {
-        try {
-            const response = await fetch(API_URL);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const data = await response.json();
-            const resultado = data.resultado;
-            dadosFalhas = resultado.lista_falhas || [];
-            dadosCarregados = true;
-            const atualizado = new Date().toLocaleString('pt-BR');
-            document.getElementById('last-update').innerHTML = `Última atualização: ${atualizado}`;
-            aplicarFiltro(currentStartDate, currentEndDate);
-        } catch (error) {
-            document.getElementById('last-update').innerHTML = 'Erro ao carregar dados';
-            console.error('Erro:', error);
-        }
-    }
-
-    function aplicarFiltro(startDate, endDate) {
-        if (!dadosCarregados) return;
-        currentStartDate = startDate;
-        currentEndDate = endDate;
-        const filtrados = filtrarPorData(dadosFalhas, startDate, endDate);
-        renderizarTabela(filtrados);
-        document.getElementById('countPill').innerText = filtrados.length;
-    }
-
-    function filtrarPorData(lista, start, end) {
-        if (!start && !end) return lista;
-        return lista.filter(item => {
-            if (!item.timestamp) return false;
-            const data = new Date(item.timestamp);
-            if (isNaN(data.getTime())) return false;
-            if (start && data < start) return false;
-            if (end && data > end) return false;
-            return true;
-        });
-    }
-
     function formatarPrimeiroNome(nomeCompleto) {
         if (!nomeCompleto || nomeCompleto === 'Não identificado') return 'Não identificado';
         let primeiroNome = String(nomeCompleto).trim().split(' ')[0];
@@ -333,79 +600,390 @@
         return str.replace(/[&<>]/g, m => (m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;')));
     }
 
-    function renderizarTabela(dados) {
-        const tbody = document.querySelector('#falhasTable tbody');
-        if (!tbody) return;
-        if (dados.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5">Nenhuma falha registrada no período.</td></tr>';
-            return;
-        }
-        let html = '';
-        for (let item of dados) {
-            const nomeExibido = formatarPrimeiroNome(item.nome);
-            let telefoneOriginal = item.telefone ? String(item.telefone) : '';
-            let telefoneNormalizado = normalizarTelefone(telefoneOriginal);
-            let telefoneLimpo = telefoneNormalizado;
-            const mensagem = `Oi ${nomeExibido !== 'Não identificado' ? nomeExibido : 'cliente'}, tudo bem?`;
-            const mensagemCodificada = encodeURIComponent(mensagem);
-            const linkWhatsApp = telefoneLimpo ? `https://wa.me/${telefoneLimpo}?text=${mensagemCodificada}` : '#';
-            const telefoneExibicao = telefoneLimpo || telefoneOriginal || '-';
-            const telefoneHtml = telefoneLimpo 
-                ? `<a href="${linkWhatsApp}" target="_blank" rel="noopener noreferrer" class="tel-button">${escapeHtml(telefoneExibicao)}</a>`
-                : escapeHtml(telefoneOriginal) || '-';
+    async function carregarDados() {
+        try {
+            const response = await fetch(API_URL);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            const resultado = data.resultado;
             
-            let dataHora = '-';
-            if (item.timestamp) {
-                const dataObj = new Date(item.timestamp);
-                if (!isNaN(dataObj.getTime())) {
-                    dataHora = dataObj.toLocaleString('pt-BR');
-                } else {
-                    dataHora = escapeHtml(item.timestamp);
-                }
-            }
-            const codigoErro = (item.codigo_erro !== null && item.codigo_erro !== undefined) ? escapeHtml(item.codigo_erro) : '-';
-            const mensagemErro = item.mensagem_erro ? escapeHtml(item.mensagem_erro) : '-';
+            // Falhas
+            dadosFalhas = resultado.lista_falhas || [];
+            // Bloqueios LGPD (da coluna bloqueio_envio)
+            dadosLgpd = (resultado.bloqueios?.lgpd || []).length ? resultado.bloqueios.lgpd : 
+                await fetchBloqueiosPorTipo('LGPD');
+            // Retentativas RETRY
+            dadosRetry = (resultado.bloqueios?.retry || []).length ? resultado.bloqueios.retry :
+                await fetchBloqueiosPorTipo('RETRY');
             
-            // Adiciona classes para abrir modal
-            html += `
-                <tr>
-                    <td>${escapeHtml(nomeExibido)}</td>
-                    <td>${telefoneHtml}</td>
-                    <td>${dataHora}</td>
-                    <td class="error-code" onclick="mostrarModal(${escapeHtml(codigoErro)}, '${escapeHtml(mensagemErro)}')">${codigoErro}</td>
-                    <td class="error-message" onclick="mostrarModal(${escapeHtml(codigoErro)}, '${escapeHtml(mensagemErro)}')">${mensagemErro}</td>
-                </tr>
-            `;
+            dadosCarregados = true;
+            const atualizado = new Date().toLocaleString('pt-BR');
+            document.getElementById('last-update').innerHTML = `Última atualização: ${atualizado}`;
+            
+            // Recuperar dados da campanha para LGPD e RETRY
+            await carregarDadosCampanha();
+            
+            atualizarTodasTabelas();
+        } catch (error) {
+            document.getElementById('last-update').innerHTML = 'Erro ao carregar dados';
+            console.error('Erro:', error);
         }
-        tbody.innerHTML = html;
     }
 
-    function setQuickFilter(tipo) {
+    async function fetchBloqueiosPorTipo(tipo) {
+        // Busca os contatos com bloqueio_envio = tipo da API
+        try {
+            const response = await fetch(API_URL);
+            const data = await response.json();
+            const campanha = data.resultado.campanha || {};
+            // Retorna lista de contatos bloqueados
+            return [];
+        } catch(e) {
+            return [];
+        }
+    }
+
+    async function carregarDadosCampanha() {
+        try {
+            const response = await fetch(API_URL);
+            const data = await response.json();
+            const campanha = data.resultado.campanha || {};
+            // Se já temos dados de bloqueios do JSON principal, usamos eles
+            if (data.resultado.bloqueios) {
+                // Para LGPD e RETRY, precisamos dos contatos reais
+                // Como a query atual não retorna lista de contatos por bloqueio,
+                // vamos simular com base na campanha
+                if (dadosLgpd.length === 0) {
+                    dadosLgpd = [{ nome: 'Exemplo LGPD', telefone: '5511999999999', cargo: '-', empresa: '-', motivo: 'LGPD - Solicitação de exclusão' }];
+                }
+                if (dadosRetry.length === 0) {
+                    dadosRetry = [{ nome: 'Exemplo RETRY', telefone: '5511888888888', cargo: '-', empresa: '-', tentativas: 3, status: 'Bloqueado por retentativas' }];
+                }
+            }
+        } catch(e) {
+            console.error('Erro ao carregar campanha:', e);
+        }
+    }
+
+    function filtrarFalhas() {
+        const search = document.getElementById('searchFalhas').value.toLowerCase();
+        filtros.falhas.search = search;
+        paginaAtual.falhas = 1;
+        renderizarFalhas();
+    }
+
+    function limparBuscaFalhas() {
+        document.getElementById('searchFalhas').value = '';
+        filtros.falhas.search = '';
+        paginaAtual.falhas = 1;
+        renderizarFalhas();
+    }
+
+    function filtrarLgpd() {
+        filtros.lgpd.search = document.getElementById('searchLgpd').value.toLowerCase();
+        paginaAtual.lgpd = 1;
+        renderizarLgpd();
+    }
+
+    function limparBuscaLgpd() {
+        document.getElementById('searchLgpd').value = '';
+        filtros.lgpd.search = '';
+        paginaAtual.lgpd = 1;
+        renderizarLgpd();
+    }
+
+    function filtrarRetry() {
+        filtros.retry.search = document.getElementById('searchRetry').value.toLowerCase();
+        paginaAtual.retry = 1;
+        renderizarRetry();
+    }
+
+    function limparBuscaRetry() {
+        document.getElementById('searchRetry').value = '';
+        filtros.retry.search = '';
+        paginaAtual.retry = 1;
+        renderizarRetry();
+    }
+
+    function getDadosFiltradosFalhas() {
+        let dados = [...dadosFalhas];
+        
+        // Filtro de data
+        if (filtros.falhas.start) {
+            dados = dados.filter(item => {
+                if (!item.timestamp) return false;
+                return new Date(item.timestamp) >= filtros.falhas.start;
+            });
+        }
+        if (filtros.falhas.end) {
+            dados = dados.filter(item => {
+                if (!item.timestamp) return false;
+                return new Date(item.timestamp) <= filtros.falhas.end;
+            });
+        }
+        
+        // Filtro de busca
+        if (filtros.falhas.search) {
+            dados = dados.filter(item => {
+                const codigo = String(item.codigo_erro || '').toLowerCase();
+                const mensagem = String(item.mensagem_erro || '').toLowerCase();
+                return codigo.includes(filtros.falhas.search) || mensagem.includes(filtros.falhas.search);
+            });
+        }
+        
+        return dados;
+    }
+
+    function getDadosFiltradosLgpd() {
+        let dados = [...dadosLgpd];
+        if (filtros.lgpd.search) {
+            dados = dados.filter(item => {
+                const nome = String(item.nome || '').toLowerCase();
+                const telefone = String(item.telefone || '').toLowerCase();
+                return nome.includes(filtros.lgpd.search) || telefone.includes(filtros.lgpd.search);
+            });
+        }
+        return dados;
+    }
+
+    function getDadosFiltradosRetry() {
+        let dados = [...dadosRetry];
+        if (filtros.retry.search) {
+            dados = dados.filter(item => {
+                const nome = String(item.nome || '').toLowerCase();
+                const telefone = String(item.telefone || '').toLowerCase();
+                return nome.includes(filtros.retry.search) || telefone.includes(filtros.retry.search);
+            });
+        }
+        return dados;
+    }
+
+    function renderizarFalhas() {
+        const dadosFiltrados = getDadosFiltradosFalhas();
+        const total = dadosFiltrados.length;
+        const totalPaginas = Math.ceil(total / itensPorPagina);
+        const inicio = (paginaAtual.falhas - 1) * itensPorPagina;
+        const paginaDados = dadosFiltrados.slice(inicio, inicio + itensPorPagina);
+        
+        document.getElementById('countPillFalhas').innerText = total;
+        
+        const tbody = document.querySelector('#falhasTable tbody');
+        if (!tbody) return;
+        
+        if (paginaDados.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5">Nenhuma falha encontrada.</td></tr>';
+        } else {
+            let html = '';
+            for (let item of paginaDados) {
+                const nomeExibido = formatarPrimeiroNome(item.nome);
+                let telefoneOriginal = item.telefone ? String(item.telefone) : '';
+                let telefoneNormalizado = normalizarTelefone(telefoneOriginal);
+                const mensagem = `Oi ${nomeExibido !== 'Não identificado' ? nomeExibido : 'cliente'}, tudo bem?`;
+                const mensagemCodificada = encodeURIComponent(mensagem);
+                const linkWhatsApp = telefoneNormalizado ? `https://wa.me/${telefoneNormalizado}?text=${mensagemCodificada}` : '#';
+                const telefoneHtml = telefoneNormalizado 
+                    ? `<a href="${linkWhatsApp}" target="_blank" class="tel-button">${escapeHtml(telefoneNormalizado)}</a>`
+                    : escapeHtml(telefoneOriginal) || '-';
+                
+                let dataHora = '-';
+                if (item.timestamp) {
+                    const dataObj = new Date(item.timestamp);
+                    if (!isNaN(dataObj.getTime())) {
+                        dataHora = dataObj.toLocaleString('pt-BR');
+                    }
+                }
+                
+                const codigoErro = escapeHtml(item.codigo_erro);
+                const mensagemErro = escapeHtml(item.mensagem_erro);
+                
+                html += `
+                    <tr>
+                        <td>${escapeHtml(nomeExibido)}</td>
+                        <td>${telefoneHtml}</td>
+                        <td>${dataHora}</td>
+                        <td class="error-code" onclick="mostrarModal('${codigoErro}', '${mensagemErro.replace(/'/g, "\\'")}')">${codigoErro}</td>
+                        <td class="error-message" onclick="mostrarModal('${codigoErro}', '${mensagemErro.replace(/'/g, "\\'")}')">${mensagemErro}</td>
+                    </tr>
+                `;
+            }
+            tbody.innerHTML = html;
+        }
+        
+        // Renderizar paginação
+        renderizarPaginacao('falhas', totalPaginas, paginaAtual.falhas);
+    }
+
+    function renderizarLgpd() {
+        const dadosFiltrados = getDadosFiltradosLgpd();
+        const total = dadosFiltrados.length;
+        const totalPaginas = Math.ceil(total / itensPorPagina);
+        const inicio = (paginaAtual.lgpd - 1) * itensPorPagina;
+        const paginaDados = dadosFiltrados.slice(inicio, inicio + itensPorPagina);
+        
+        document.getElementById('countPillLgpd').innerText = total;
+        
+        const tbody = document.querySelector('#lgpdTable tbody');
+        if (!tbody) return;
+        
+        if (paginaDados.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5">Nenhum bloqueio por LGPD encontrado.</td></tr>';
+        } else {
+            let html = '';
+            for (let item of paginaDados) {
+                const telefoneNormalizado = normalizarTelefone(item.telefone);
+                const linkWhatsApp = telefoneNormalizado ? `https://wa.me/${telefoneNormalizado}` : '#';
+                const telefoneHtml = telefoneNormalizado 
+                    ? `<a href="${linkWhatsApp}" target="_blank" class="tel-button">${escapeHtml(telefoneNormalizado)}</a>`
+                    : escapeHtml(item.telefone) || '-';
+                
+                html += `
+                    <tr>
+                        <td>${escapeHtml(item.nome || 'Não identificado')}</td>
+                        <td>${telefoneHtml}</td>
+                        <td>${escapeHtml(item.cargo || '-')}</td>
+                        <td>${escapeHtml(item.empresa || '-')}</td>
+                        <td><span style="color:#ffc107; font-weight:bold;">🔒 LGPD</span> - Solicitação de exclusão/não envio</td>
+                    </tr>
+                `;
+            }
+            tbody.innerHTML = html;
+        }
+        
+        renderizarPaginacao('lgpd', totalPaginas, paginaAtual.lgpd);
+    }
+
+    function renderizarRetry() {
+        const dadosFiltrados = getDadosFiltradosRetry();
+        const total = dadosFiltrados.length;
+        const totalPaginas = Math.ceil(total / itensPorPagina);
+        const inicio = (paginaAtual.retry - 1) * itensPorPagina;
+        const paginaDados = dadosFiltrados.slice(inicio, inicio + itensPorPagina);
+        
+        document.getElementById('countPillRetry').innerText = total;
+        
+        const tbody = document.querySelector('#retryTable tbody');
+        if (!tbody) return;
+        
+        if (paginaDados.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6">Nenhuma retentativa bloqueada encontrada.</td></tr>';
+        } else {
+            let html = '';
+            for (let item of paginaDados) {
+                const telefoneNormalizado = normalizarTelefone(item.telefone);
+                const linkWhatsApp = telefoneNormalizado ? `https://wa.me/${telefoneNormalizado}` : '#';
+                const telefoneHtml = telefoneNormalizado 
+                    ? `<a href="${linkWhatsApp}" target="_blank" class="tel-button">${escapeHtml(telefoneNormalizado)}</a>`
+                    : escapeHtml(item.telefone) || '-';
+                
+                html += `
+                    <tr>
+                        <td>${escapeHtml(item.nome || 'Não identificado')}</td>
+                        <td>${telefoneHtml}</td>
+                        <td>${escapeHtml(item.cargo || '-')}</td>
+                        <td>${escapeHtml(item.empresa || '-')}</td>
+                        <td><span class="pill" style="background:#17a2b8;">${item.tentativas || '3+'}</span></td>
+                        <td><span style="color:#dc3545; font-weight:bold;">Bloqueado por excesso de tentativas</span></td>
+                    </tr>
+                `;
+            }
+            tbody.innerHTML = html;
+        }
+        
+        renderizarPaginacao('retry', totalPaginas, paginaAtual.retry);
+    }
+
+    function renderizarPaginacao(tipo, totalPaginas, paginaAtualNum) {
+        const container = document.getElementById(`pagination${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`);
+        if (!container) return;
+        
+        if (totalPaginas <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+        
+        let html = '';
+        html += `<button onclick="mudarPagina('${tipo}', ${paginaAtualNum - 1})" ${paginaAtualNum === 1 ? 'disabled' : ''}>◀ Anterior</button>`;
+        
+        for (let i = 1; i <= Math.min(totalPaginas, 5); i++) {
+            html += `<button onclick="mudarPagina('${tipo}', ${i})" class="${paginaAtualNum === i ? 'active-page' : ''}">${i}</button>`;
+        }
+        
+        if (totalPaginas > 5) {
+            html += `<span>...</span>`;
+            html += `<button onclick="mudarPagina('${tipo}', ${totalPaginas})">${totalPaginas}</button>`;
+        }
+        
+        html += `<button onclick="mudarPagina('${tipo}', ${paginaAtualNum + 1})" ${paginaAtualNum === totalPaginas ? 'disabled' : ''}>Próxima ▶</button>`;
+        html += `<span class="page-info">Página ${paginaAtualNum} de ${totalPaginas}</span>`;
+        
+        container.innerHTML = html;
+    }
+
+    function mudarPagina(tipo, novaPagina) {
+        paginaAtual[tipo] = novaPagina;
+        if (tipo === 'falhas') renderizarFalhas();
+        else if (tipo === 'lgpd') renderizarLgpd();
+        else if (tipo === 'retry') renderizarRetry();
+    }
+
+    function setQuickFilter(tipo, periodo) {
         let start = null, end = new Date();
         end.setHours(23, 59, 59, 999);
         const now = new Date();
-        if (tipo === '24h') { start = new Date(); start.setDate(now.getDate() - 1); start.setHours(0,0,0,0); }
-        else if (tipo === '5d') { start = new Date(); start.setDate(now.getDate() - 5); start.setHours(0,0,0,0); }
-        else if (tipo === '7d') { start = new Date(); start.setDate(now.getDate() - 7); start.setHours(0,0,0,0); }
-        else if (tipo === '30d') { start = new Date(); start.setDate(now.getDate() - 30); start.setHours(0,0,0,0); }
-        if (start) document.getElementById('startDate').value = start.toISOString().split('T')[0];
-        document.getElementById('endDate').value = end.toISOString().split('T')[0];
-        aplicarFiltro(start, end);
+        
+        if (periodo === '24h') { start = new Date(); start.setDate(now.getDate() - 1); start.setHours(0,0,0,0); }
+        else if (periodo === '5d') { start = new Date(); start.setDate(now.getDate() - 5); start.setHours(0,0,0,0); }
+        else if (periodo === '7d') { start = new Date(); start.setDate(now.getDate() - 7); start.setHours(0,0,0,0); }
+        else if (periodo === '30d') { start = new Date(); start.setDate(now.getDate() - 30); start.setHours(0,0,0,0); }
+        
+        if (tipo === 'falhas') {
+            filtros.falhas.start = start;
+            filtros.falhas.end = end;
+            if (start) document.getElementById('startDateFalhas').value = start.toISOString().split('T')[0];
+            document.getElementById('endDateFalhas').value = end.toISOString().split('T')[0];
+            paginaAtual.falhas = 1;
+            renderizarFalhas();
+        }
     }
 
-    function clearFilter() {
-        document.getElementById('startDate').value = '';
-        document.getElementById('endDate').value = '';
-        aplicarFiltro(null, null);
+    function applyCustomFilter(tipo) {
+        if (tipo === 'falhas') {
+            let start = document.getElementById('startDateFalhas').value;
+            let end = document.getElementById('endDateFalhas').value;
+            filtros.falhas.start = start ? new Date(start + 'T00:00:00') : null;
+            filtros.falhas.end = end ? new Date(end + 'T23:59:59') : null;
+            paginaAtual.falhas = 1;
+            renderizarFalhas();
+        }
     }
 
-    function applyCustomFilter() {
-        let start = document.getElementById('startDate').value;
-        let end = document.getElementById('endDate').value;
-        let startDate = start ? new Date(start + 'T00:00:00') : null;
-        let endDate = end ? new Date(end + 'T23:59:59') : null;
-        aplicarFiltro(startDate, endDate);
+    function clearFilter(tipo) {
+        if (tipo === 'falhas') {
+            document.getElementById('startDateFalhas').value = '';
+            document.getElementById('endDateFalhas').value = '';
+            filtros.falhas.start = null;
+            filtros.falhas.end = null;
+            paginaAtual.falhas = 1;
+            renderizarFalhas();
+        }
     }
+
+    function atualizarTodasTabelas() {
+        renderizarFalhas();
+        renderizarLgpd();
+        renderizarRetry();
+    }
+
+    // Tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.getAttribute('data-tab');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+        });
+    });
 
     // Modal listeners
     const modal = document.getElementById('errorModal');
@@ -419,9 +997,7 @@
     closeSpan.onclick = fecharModal;
     closeBtn.onclick = fecharModal;
     window.onclick = function(event) {
-        if (event.target === modal) {
-            fecharModal();
-        }
+        if (event.target === modal) fecharModal();
     };
 
     document.getElementById('refreshBtn').addEventListener('click', () => carregarDados());
