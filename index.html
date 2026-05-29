@@ -453,121 +453,135 @@
     }
     
     function processarDadosDistintos(resultado) {
-        const mapa = new Map();
-        
-        // Respostas SIM
-        if (resultado.lista_sim && Array.isArray(resultado.lista_sim)) {
-            resultado.lista_sim.forEach(item => {
-                const telefone = normalizarTelefone(item.telefone);
-                if (!mapa.has(telefone)) {
-                    mapa.set(telefone, {
-                        nome: item.nome,
-                        telefone: item.telefone,
-                        cargo: item.cargo,
-                        empresa: item.empresa,
-                        status: 'sim',
-                        data: item.respondido_em,
-                        detalhes: `Respondeu SIM - Template: ${item.template_enviado || 'N/A'}`
-                    });
-                }
-            });
-        }
-        
-        // Respostas NÃO
-        if (resultado.lista_nao && Array.isArray(resultado.lista_nao)) {
-            resultado.lista_nao.forEach(item => {
-                const telefone = normalizarTelefone(item.telefone);
-                if (!mapa.has(telefone)) {
-                    mapa.set(telefone, {
-                        nome: item.nome,
-                        telefone: item.telefone,
-                        cargo: item.cargo,
-                        empresa: item.empresa,
-                        status: 'nao',
-                        data: item.respondido_em,
-                        detalhes: `Respondeu NÃO - Template: ${item.template_enviado || 'N/A'}`
-                    });
-                }
-            });
-        }
-        
-        // Falhas
-        if (resultado.lista_falhas && Array.isArray(resultado.lista_falhas)) {
-            resultado.lista_falhas.forEach(item => {
-                const telefone = normalizarTelefone(item.telefone);
-                if (!mapa.has(telefone)) {
-                    mapa.set(telefone, {
-                        nome: item.nome,
-                        telefone: item.telefone,
-                        cargo: null,
-                        empresa: null,
-                        status: 'falha',
-                        data: item.timestamp,
-                        codigo_erro: item.codigo_erro,
-                        mensagem_erro: item.mensagem_erro,
-                        detalhes: `<span class="error-code" onclick="mostrarModal('${item.codigo_erro}', '${escapeHtml(item.mensagem_erro || '').replace(/'/g, "\\'")}')">⚠️ Código ${item.codigo_erro}</span>`
-                    });
-                }
-            });
-        }
-        
-        // RETRY
-        if (resultado.lista_retry && Array.isArray(resultado.lista_retry)) {
-            resultado.lista_retry.forEach(item => {
-                const telefone = normalizarTelefone(item.telefone);
-                if (!mapa.has(telefone)) {
-                    mapa.set(telefone, {
-                        nome: item.nome,
-                        telefone: item.telefone,
-                        cargo: item.cargo,
-                        empresa: item.empresa,
-                        status: 'retry',
-                        data: item.bloqueio_em,
-                        detalhes: `${item.envios_count || 'Múltiplas'} tentativa(s) sem sucesso`
-                    });
-                }
-            });
-        }
-        
-        // LGPD
-        if (resultado.lista_lgpd && Array.isArray(resultado.lista_lgpd)) {
-            resultado.lista_lgpd.forEach(item => {
-                const telefone = normalizarTelefone(item.telefone);
-                if (!mapa.has(telefone)) {
-                    mapa.set(telefone, {
-                        nome: item.nome,
-                        telefone: item.telefone,
-                        cargo: item.cargo,
-                        empresa: item.empresa,
-                        status: 'lgpd',
-                        data: item.bloqueio_em,
-                        detalhes: 'Bloqueado por solicitação LGPD'
-                    });
-                }
-            });
-        }
-        
-        // Sem WhatsApp
-        if (resultado.lista_sem_whatsapp && Array.isArray(resultado.lista_sem_whatsapp)) {
-            resultado.lista_sem_whatsapp.forEach(item => {
-                const telefone = normalizarTelefone(item.telefone);
-                if (!mapa.has(telefone)) {
-                    mapa.set(telefone, {
-                        nome: item.nome,
-                        telefone: item.telefone,
-                        cargo: item.cargo,
-                        empresa: item.empresa,
-                        status: 'semwhatsapp',
-                        data: item.validado_em,
-                        detalhes: 'Número não possui WhatsApp válido'
-                    });
-                }
-            });
-        }
-        
-        enviosDistintos = Array.from(mapa.values());
-        console.log('Total de contatos distintos:', enviosDistintos.length);
+    const mapa = new Map();
+    
+    // Primeiro, registrar TODOS os enviados (para base)
+    if (resultado.lista_enviados && Array.isArray(resultado.lista_enviados)) {
+        resultado.lista_enviados.forEach(item => {
+            const telefone = normalizarTelefone(item.telefone);
+            if (!mapa.has(telefone)) {
+                mapa.set(telefone, {
+                    nome: item.nome,
+                    telefone: item.telefone,
+                    cargo: item.cargo,
+                    empresa: item.empresa,
+                    status: 'enviado',
+                    data: item.enviado_em,
+                    detalhes: `Mensagem enviada em ${formatarData(item.enviado_em)} - Aguardando resposta`
+                });
+            }
+        });
     }
+    
+    // Respostas SIM (sobrescreve enviado)
+    if (resultado.lista_sim && Array.isArray(resultado.lista_sim)) {
+        resultado.lista_sim.forEach(item => {
+            const telefone = normalizarTelefone(item.telefone);
+            mapa.set(telefone, {
+                nome: item.nome,
+                telefone: item.telefone,
+                cargo: item.cargo,
+                empresa: item.empresa,
+                status: 'sim',
+                data: item.respondido_em,
+                detalhes: `Respondeu SIM - Template: ${item.template_enviado || 'N/A'}`
+            });
+        });
+    }
+    
+    // Respostas NÃO (sobrescreve enviado)
+    if (resultado.lista_nao && Array.isArray(resultado.lista_nao)) {
+        resultado.lista_nao.forEach(item => {
+            const telefone = normalizarTelefone(item.telefone);
+            mapa.set(telefone, {
+                nome: item.nome,
+                telefone: item.telefone,
+                cargo: item.cargo,
+                empresa: item.empresa,
+                status: 'nao',
+                data: item.respondido_em,
+                detalhes: `Respondeu NÃO - Template: ${item.template_enviado || 'N/A'}`
+            });
+        });
+    }
+    
+    // Falhas
+    if (resultado.lista_falhas && Array.isArray(resultado.lista_falhas)) {
+        resultado.lista_falhas.forEach(item => {
+            const telefone = normalizarTelefone(item.telefone);
+            if (!mapa.has(telefone)) {
+                mapa.set(telefone, {
+                    nome: item.nome,
+                    telefone: item.telefone,
+                    cargo: null,
+                    empresa: null,
+                    status: 'falha',
+                    data: item.timestamp,
+                    codigo_erro: item.codigo_erro,
+                    mensagem_erro: item.mensagem_erro,
+                    detalhes: `<span class="error-code" onclick="mostrarModal('${item.codigo_erro}', '${escapeHtml(item.mensagem_erro || '').replace(/'/g, "\\'")}')">⚠️ Código ${item.codigo_erro}</span>`
+                });
+            }
+        });
+    }
+    
+    // RETRY
+    if (resultado.lista_retry && Array.isArray(resultado.lista_retry)) {
+        resultado.lista_retry.forEach(item => {
+            const telefone = normalizarTelefone(item.telefone);
+            if (!mapa.has(telefone)) {
+                mapa.set(telefone, {
+                    nome: item.nome,
+                    telefone: item.telefone,
+                    cargo: item.cargo,
+                    empresa: item.empresa,
+                    status: 'retry',
+                    data: item.bloqueio_em,
+                    detalhes: `${item.envios_count || 'Múltiplas'} tentativa(s) sem sucesso`
+                });
+            }
+        });
+    }
+    
+    // LGPD
+    if (resultado.lista_lgpd && Array.isArray(resultado.lista_lgpd)) {
+        resultado.lista_lgpd.forEach(item => {
+            const telefone = normalizarTelefone(item.telefone);
+            if (!mapa.has(telefone)) {
+                mapa.set(telefone, {
+                    nome: item.nome,
+                    telefone: item.telefone,
+                    cargo: item.cargo,
+                    empresa: item.empresa,
+                    status: 'lgpd',
+                    data: item.bloqueio_em,
+                    detalhes: 'Bloqueado por solicitação LGPD'
+                });
+            }
+        });
+    }
+    
+    // Sem WhatsApp
+    if (resultado.lista_sem_whatsapp && Array.isArray(resultado.lista_sem_whatsapp)) {
+        resultado.lista_sem_whatsapp.forEach(item => {
+            const telefone = normalizarTelefone(item.telefone);
+            if (!mapa.has(telefone)) {
+                mapa.set(telefone, {
+                    nome: item.nome,
+                    telefone: item.telefone,
+                    cargo: item.cargo,
+                    empresa: item.empresa,
+                    status: 'semwhatsapp',
+                    data: item.validado_em,
+                    detalhes: 'Número não possui WhatsApp válido'
+                });
+            }
+        });
+    }
+    
+    enviosDistintos = Array.from(mapa.values());
+    console.log('Total de contatos distintos:', enviosDistintos.length);
+}
     
     function ordenarDados(dados) {
         return [...dados].sort((a, b) => {
