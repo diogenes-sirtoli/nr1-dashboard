@@ -6,7 +6,831 @@
     <title>Dashboard NR1 - Campanha WhatsApp</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard NR1 - Campanha WhatsApp</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header-flex { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 10px; }
+        .header-flex h1 { margin: 0; font-size: 1.5em; }
+        .nav-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+        .nav-buttons a {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .nav-buttons a:hover { background: #0056b3; }
+        .nav-buttons a.custo { background: #28a745; }
+        .nav-buttons a.custo:hover { background: #1e7e34; }
+        .update-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 20px; }
+        .last-update { color: #666; font-size: 0.9em; }
+        .refresh-buttons button {
+            background: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: background 0.2s;
+        }
+        .refresh-buttons button:hover { background: #5a6268; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; }
+        .card h3 { font-size: 0.9em; color: #555; margin-bottom: 10px; }
+        .card .number { font-size: 2.2em; font-weight: bold; color: #1a1a2e; }
+        .charts-row { display: flex; flex-wrap: wrap; gap: 30px; margin-bottom: 30px; }
+        .chart-box { flex: 1; min-width: 300px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .chart-box h2 { font-size: 1.2em; margin-bottom: 15px; color: #333; border-left: 4px solid #007bff; padding-left: 10px; }
+        canvas { max-height: 300px; width: 100%; }
+        
+        /* Seção de envios */
+        .envios-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        .envios-header {
+            background: linear-gradient(135deg, #075E54, #128C7E);
+            color: white;
+            padding: 15px 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .filtro-box {
+            background: white;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .filtro-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        .filtro-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .filtro-buttons button {
+            padding: 8px 16px;
+            background: #e9ecef;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .filtro-buttons button:hover { background: #007bff; color: white; }
+        .search-box {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .search-box input {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            width: 250px;
+            font-size: 14px;
+        }
+        .search-box button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .search-box button:hover { background: #0056b3; }
+        .custom-range {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        .custom-range input { padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
+        .custom-range button { background: #28a745; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; }
+        .clear-filter { background: #dc3545 !important; }
+        .filtro-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .filtro-group select, .filtro-group input {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .envios-table-wrapper {
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .envios-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .envios-table th, .envios-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .envios-table th {
+            background-color: #f8f9fa;
+            position: sticky;
+            top: 0;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+        }
+        .envios-table th:hover { background-color: #e9ecef; }
+        .envios-table th .sort-icon {
+            display: inline-block;
+            margin-left: 5px;
+            font-size: 0.8em;
+            opacity: 0.5;
+        }
+        .envios-table th.asc .sort-icon { opacity: 1; transform: rotate(180deg); display: inline-block; }
+        .envios-table th.desc .sort-icon { opacity: 1; }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .status-badge.sim { background: #28a745; color: white; }
+        .status-badge.nao { background: #dc3545; color: white; }
+        .status-badge.falha { background: #ffc107; color: #333; }
+        .status-badge.retry { background: #17a2b8; color: white; }
+        .status-badge.lgpd { background: #6c757d; color: white; }
+        .status-badge.semwhatsapp { background: #fd7e14; color: white; }
+        .status-badge.enviado { background: #007bff; color: white; }
+        .error-code {
+            cursor: pointer;
+            background: #fff3cd;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .error-code:hover { background: #ffe0a3; text-decoration: underline; }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            padding: 20px;
+            flex-wrap: wrap;
+            background: white;
+            border-top: 1px solid #eee;
+        }
+        .pagination button {
+            padding: 8px 12px;
+            background: #e9ecef;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .pagination button:hover:not(:disabled) { background: #007bff; color: white; }
+        .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .pagination .active-page { background: #075E54; color: white; }
+        .total-count { margin-left: 20px; color: #666; font-size: 14px; }
+        
+        .status-table { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-top: 20px; }
+        .status-table h2 { font-size: 1.2em; margin-bottom: 15px; color: #333; }
+        .loading { text-align: center; padding: 50px; font-size: 1.2em; color: #555; }
+        footer { text-align: center; margin-top: 30px; font-size: 0.8em; color: #888; }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: white;
+            margin: auto;
+            padding: 25px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 550px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+        }
+        .modal-header h3 { color: #dc3545; margin: 0; }
+        .close-modal { font-size: 28px; font-weight: bold; cursor: pointer; color: #aaa; }
+        .close-modal:hover { color: #333; }
+        
+        @media (max-width: 768px) {
+            .filtro-row { flex-direction: column; align-items: stretch; }
+            .search-box { justify-content: stretch; }
+            .search-box input { flex: 1; }
+            .envios-table th, .envios-table td { font-size: 12px; padding: 8px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header-flex">
+        <h1>📊 Dashboard NR1 - Campanha WhatsApp</h1>
+        <div class="nav-buttons">
+            <a href="detalhes.html">📋 Ver detalhes (respostas)</a>
+            <a href="falhas.html">⚠️ Ver falhas</a>
+            <a href="custo_envio_mensagem.html" class="custo">💰 Custos de envio</a>
+        </div>
+    </div>
+    <div class="update-row">
+        <div id="last-update" class="last-update">Carregando...</div>
+        <div class="refresh-buttons">
+            <button id="refreshBtn">🔄 Atualizar dados</button>
+        </div>
+    </div>
+
+    <div class="cards" id="cards">
+        <div class="card"><h3>Total de Contatos</h3><div class="number">-</div></div>
+        <div class="card"><h3>✅ Responderam SIM</h3><div class="number">-</div></div>
+        <div class="card"><h3>❌ Responderam NÃO</h3><div class="number">-</div></div>
+        <div class="card"><h3>📭 Sem Resposta</h3><div class="number">-</div></div>
+        <div class="card"><h3>📨 Enviados</h3><div class="number">-</div></div>
+        <div class="card"><h3>⏳ Não Enviados</h3><div class="number">-</div></div>
+    </div>
+
+    <div class="charts-row">
+        <div class="chart-box"><h2>📈 Respostas da Campanha</h2><canvas id="respostasChart"></canvas></div>
+        <div class="chart-box"><h2>🔄 Tentativas de Envio</h2><canvas id="tentativasChart"></canvas></div>
+    </div>
+
+    <!-- Seção: Todos os Envios (Distintos por contato) -->
+    <div class="envios-section">
+        <div class="envios-header">📋 LISTA DE CONTATOS (Registros distintos) <span id="totalEnvioCount" style="font-size: 14px; margin-left: 10px;"></span></div>
+        
+        <div class="filtro-box">
+            <div class="filtro-row">
+                <div class="filtro-buttons">
+                    <button onclick="setQuickFilter('24h')">📅 Últimas 24h</button>
+                    <button onclick="setQuickFilter('5d')">📅 Últimos 5 dias</button>
+                    <button onclick="setQuickFilter('7d')">📅 Última semana</button>
+                    <button onclick="setQuickFilter('30d')">📅 Último mês</button>
+                </div>
+                <div class="search-box">
+                    <input type="text" id="searchErro" placeholder="Buscar por código ou mensagem de erro...">
+                    <button onclick="filtrarPorErro()">🔍 Buscar</button>
+                    <button onclick="limparBuscaErro()" class="clear-filter" style="background:#6c757d">✖ Limpar</button>
+                </div>
+            </div>
+            <div class="custom-range">
+                <input type="date" id="startDate">
+                <span>até</span>
+                <input type="date" id="endDate">
+                <button onclick="applyCustomFilter()">Aplicar período</button>
+                <button onclick="clearFilter()" class="clear-filter">🗑️ Limpar filtro</button>
+            </div>
+            <div class="filtro-group" style="margin-top: 15px;">
+                <label>📊 Filtrar por status:</label>
+                <select id="filterStatus">
+                    <option value="all">Todos os status</option>
+                    <option value="sim">✅ Responderam SIM</option>
+                    <option value="nao">❌ Responderam NÃO</option>
+                    <option value="falha">⚠️ Falha no envio</option>
+                    <option value="retry">🔄 Bloqueio (RETRY)</option>
+                    <option value="lgpd">🔒 Bloqueio LGPD</option>
+                    <option value="semwhatsapp">📵 Sem WhatsApp</option>
+                </select>
+                <label style="margin-left: 20px;">📄 Registros por página:</label>
+                <select id="perPage" onchange="mudarPagina(1)">
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="envios-table-wrapper">
+            <table class="envios-table" id="enviosTable">
+                <thead>
+                    <tr>
+                        <th data-sort="nome" class="sortable">Nome <span class="sort-icon">▼</span></th>
+                        <th data-sort="telefone">Telefone</th>
+                        <th data-sort="cargo">Cargo</th>
+                        <th data-sort="empresa">Empresa</th>
+                        <th data-sort="status">Status <span class="sort-icon">▼</span></th>
+                        <th data-sort="data">Data/Hora <span class="sort-icon">▼</span></th>
+                        <th>Código/Mensagem</th>
+                    </tr>
+                </thead>
+                <tbody id="enviosTbody">
+                    <tr><td colspan="7" class="loading">Carregando dados...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="paginationEnvios" class="pagination"></div>
+    </div>
+
+    <div class="status-table">
+        <h2>📲 Status das Mensagens (Agregado)</h2>
+        <table id="statusTable"><thead><tr><th>Status</th><th>Quantidade</th></tr></thead><tbody><tr><td colspan="2" class="loading">Carregando...</td></tr></tbody>
+    </div>
+    <footer>Clique no título da coluna para ordenar | Clique no código de erro para ver detalhes</footer>
+</div>
+
+<!-- Modal de erro -->
+<div id="errorModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header"><h3 id="modalTitle">Detalhes do Erro</h3><span class="close-modal">&times;</span></div>
+        <div id="modalBody" style="padding: 15px 0;"></div>
+    </div>
+</div>
+
+<script>
+    const API_URL = 'https://testes-api-n8n-dev.nicehill-2119d736.brazilsouth.azurecontainerapps.io/webhook/nr1-dashboard-data';
+    let charts = { respostas: null, tentativas: null };
+    let enviosDistintos = [];
+    let paginaAtual = 1;
+    let ordenacao = { coluna: 'data', ordem: 'desc' };
+    let filtroStatus = 'all';
+    let buscaErro = '';
+    let dataStart = null;
+    let dataEnd = null;
+    
+    const statusTraducao = { 'sent': '📨 Enviada', 'delivered': '✅ Entregue', 'read': '👁️ Lida', 'failed': '❌ Falhou', 'undefined': '❓ Indefinido' };
+    
+    const explicacoesErros = {
+        "131049": { titulo: "Código 131049 - Limite de marketing atingido", explicacao: "O destinatário recebeu muitas mensagens de marketing nos últimos dias e o WhatsApp bloqueou temporariamente o envio. Não reenvie imediatamente – espere pelo menos 24 horas." },
+        "131026": { titulo: "Código 131026 - Mensagem não entregue (indisponível)", explicacao: "O número do destinatário pode estar inativo, não possui conta no WhatsApp ou o app está desatualizado. Verifique se o número está correto." },
+        "131050": { titulo: "Código 131050 - Usuário cancelou inscrição", explicacao: "O destinatário optou por não receber mais mensagens de marketing da sua empresa. Respeite a decisão." }
+    };
+    
+    function mostrarModal(codigo, mensagem) {
+        const modal = document.getElementById('errorModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        const explicacao = explicacoesErros[String(codigo)];
+        if (explicacao) {
+            modalTitle.innerText = explicacao.titulo;
+            modalBody.innerHTML = `<p>${explicacao.explicacao}</p><p><strong>Mensagem original:</strong> ${mensagem}</p>`;
+        } else {
+            modalTitle.innerText = `Código ${codigo} - Detalhes`;
+            modalBody.innerHTML = `<p><strong>Código ${codigo}</strong><br>${mensagem}</p><p>Consulte a documentação da Meta WhatsApp Business API.</p>`;
+        }
+        modal.style.display = 'flex';
+    }
+    
+    function fecharModal() { document.getElementById('errorModal').style.display = 'none'; }
+    document.querySelector('.close-modal').onclick = fecharModal;
+    window.onclick = function(event) { if (event.target === document.getElementById('errorModal')) fecharModal(); };
+    
+    function formatarNome(nomeCompleto) {
+        if (!nomeCompleto || nomeCompleto === 'Não identificado') return 'Não identificado';
+        return String(nomeCompleto).trim();
+    }
+    
+    function normalizarTelefone(telefone) {
+        if (!telefone) return '';
+        let numeros = String(telefone).replace(/\D/g, '');
+        if (numeros.length === 12) return numeros.slice(0, 4) + '9' + numeros.slice(4);
+        if (numeros.length === 13 && numeros[4] !== '9') return numeros.slice(0, 4) + '9' + numeros.slice(4);
+        return numeros;
+    }
+    
+    function formatarData(dataISO) {
+        if (!dataISO) return '-';
+        try {
+            const data = new Date(dataISO);
+            if (isNaN(data.getTime())) return '-';
+            return data.toLocaleDateString('pt-BR') + ' ' + data.toLocaleTimeString('pt-BR');
+        } catch(e) { return '-'; }
+    }
+    
+    function escapeHtml(value) {
+        if (value === null || value === undefined) return '';
+        return String(value).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]);
+    }
+    
+    function getStatusBadge(status) {
+        const badges = {
+            'sim': '<span class="status-badge sim">✅ SIM</span>',
+            'nao': '<span class="status-badge nao">❌ NÃO</span>',
+            'falha': '<span class="status-badge falha">⚠️ Falha</span>',
+            'retry': '<span class="status-badge retry">🔄 Retentativa</span>',
+            'lgpd': '<span class="status-badge lgpd">🔒 LGPD</span>',
+            'semwhatsapp': '<span class="status-badge semwhatsapp">📵 Sem WhatsApp</span>'
+        };
+        return badges[status] || '<span class="status-badge enviado">📨 Enviado</span>';
+    }
+    
+    function processarDadosDistintos(resultado) {
+        const mapa = new Map(); // Usa telefone como chave para garantir distinção
+        
+        // Respostas SIM
+        (resultado.lista_sim || []).forEach(item => {
+            const telefone = normalizarTelefone(item.telefone);
+            if (!mapa.has(telefone) || mapa.get(telefone).status !== 'sim') {
+                mapa.set(telefone, {
+                    nome: item.nome,
+                    telefone: item.telefone,
+                    cargo: item.cargo,
+                    empresa: item.empresa,
+                    status: 'sim',
+                    data: item.respondido_em,
+                    template: item.template_enviado,
+                    codigo_erro: null,
+                    mensagem_erro: null
+                });
+            }
+        });
+        
+        // Respostas NÃO
+        (resultado.lista_nao || []).forEach(item => {
+            const telefone = normalizarTelefone(item.telefone);
+            if (!mapa.has(telefone)) {
+                mapa.set(telefone, {
+                    nome: item.nome,
+                    telefone: item.telefone,
+                    cargo: item.cargo,
+                    empresa: item.empresa,
+                    status: 'nao',
+                    data: item.respondido_em,
+                    template: item.template_enviado,
+                    codigo_erro: null,
+                    mensagem_erro: null
+                });
+            }
+        });
+        
+        // Falhas
+        (resultado.lista_falhas || []).forEach(item => {
+            const telefone = normalizarTelefone(item.telefone);
+            if (!mapa.has(telefone)) {
+                mapa.set(telefone, {
+                    nome: item.nome,
+                    telefone: item.telefone,
+                    cargo: null,
+                    empresa: null,
+                    status: 'falha',
+                    data: item.timestamp,
+                    codigo_erro: item.codigo_erro,
+                    mensagem_erro: item.mensagem_erro
+                });
+            }
+        });
+        
+        // RETRY
+        (resultado.lista_retry || []).forEach(item => {
+            const telefone = normalizarTelefone(item.telefone);
+            if (!mapa.has(telefone)) {
+                mapa.set(telefone, {
+                    nome: item.nome,
+                    telefone: item.telefone,
+                    cargo: item.cargo,
+                    empresa: item.empresa,
+                    status: 'retry',
+                    data: item.bloqueio_em,
+                    codigo_erro: null,
+                    mensagem_erro: null,
+                    envios_count: item.envios_count
+                });
+            }
+        });
+        
+        // LGPD
+        (resultado.lista_lgpd || []).forEach(item => {
+            const telefone = normalizarTelefone(item.telefone);
+            if (!mapa.has(telefone)) {
+                mapa.set(telefone, {
+                    nome: item.nome,
+                    telefone: item.telefone,
+                    cargo: item.cargo,
+                    empresa: item.empresa,
+                    status: 'lgpd',
+                    data: item.bloqueio_em,
+                    codigo_erro: null,
+                    mensagem_erro: null
+                });
+            }
+        });
+        
+        // Sem WhatsApp
+        (resultado.lista_sem_whatsapp || []).forEach(item => {
+            const telefone = normalizarTelefone(item.telefone);
+            if (!mapa.has(telefone)) {
+                mapa.set(telefone, {
+                    nome: item.nome,
+                    telefone: item.telefone,
+                    cargo: item.cargo,
+                    empresa: item.empresa,
+                    status: 'semwhatsapp',
+                    data: item.validado_em,
+                    codigo_erro: null,
+                    mensagem_erro: null,
+                    status_whatsapp: item.status_whatsapp
+                });
+            }
+        });
+        
+        enviosDistintos = Array.from(mapa.values());
+    }
+    
+    function ordenarDados(dados) {
+        return [...dados].sort((a, b) => {
+            let valA, valB;
+            switch(ordenacao.coluna) {
+                case 'nome':
+                    valA = (a.nome || '').toLowerCase();
+                    valB = (b.nome || '').toLowerCase();
+                    break;
+                case 'telefone':
+                    valA = normalizarTelefone(a.telefone) || '';
+                    valB = normalizarTelefone(b.telefone) || '';
+                    break;
+                case 'cargo':
+                    valA = (a.cargo || '').toLowerCase();
+                    valB = (b.cargo || '').toLowerCase();
+                    break;
+                case 'empresa':
+                    valA = (a.empresa || '').toLowerCase();
+                    valB = (b.empresa || '').toLowerCase();
+                    break;
+                case 'status':
+                    valA = a.status;
+                    valB = b.status;
+                    break;
+                case 'data':
+                default:
+                    valA = a.data || '';
+                    valB = b.data || '';
+                    break;
+            }
+            if (valA < valB) return ordenacao.ordem === 'asc' ? -1 : 1;
+            if (valA > valB) return ordenacao.ordem === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }
+    
+    function getDadosFiltrados() {
+        let dados = [...enviosDistintos];
+        
+        // Filtro por status
+        if (filtroStatus !== 'all') {
+            dados = dados.filter(item => item.status === filtroStatus);
+        }
+        
+        // Filtro por data
+        if (dataStart) {
+            dados = dados.filter(item => item.data && new Date(item.data) >= dataStart);
+        }
+        if (dataEnd) {
+            dados = dados.filter(item => item.data && new Date(item.data) <= dataEnd);
+        }
+        
+        // Filtro por erro
+        if (buscaErro) {
+            dados = dados.filter(item => 
+                (item.codigo_erro && String(item.codigo_erro).toLowerCase().includes(buscaErro)) ||
+                (item.mensagem_erro && item.mensagem_erro.toLowerCase().includes(buscaErro))
+            );
+        }
+        
+        return dados;
+    }
+    
+    function setQuickFilter(periodo) {
+        const now = new Date();
+        dataEnd = new Date();
+        dataEnd.setHours(23, 59, 59, 999);
+        
+        if (periodo === '24h') {
+            dataStart = new Date(now);
+            dataStart.setDate(now.getDate() - 1);
+            dataStart.setHours(0, 0, 0, 0);
+        } else if (periodo === '5d') {
+            dataStart = new Date(now);
+            dataStart.setDate(now.getDate() - 5);
+            dataStart.setHours(0, 0, 0, 0);
+        } else if (periodo === '7d') {
+            dataStart = new Date(now);
+            dataStart.setDate(now.getDate() - 7);
+            dataStart.setHours(0, 0, 0, 0);
+        } else if (periodo === '30d') {
+            dataStart = new Date(now);
+            dataStart.setDate(now.getDate() - 30);
+            dataStart.setHours(0, 0, 0, 0);
+        }
+        
+        document.getElementById('startDate').value = dataStart ? dataStart.toISOString().split('T')[0] : '';
+        document.getElementById('endDate').value = dataEnd.toISOString().split('T')[0];
+        paginaAtual = 1;
+        renderizarEnvios();
+    }
+    
+    function applyCustomFilter() {
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
+        dataStart = start ? new Date(start + 'T00:00:00') : null;
+        dataEnd = end ? new Date(end + 'T23:59:59') : null;
+        paginaAtual = 1;
+        renderizarEnvios();
+    }
+    
+    function clearFilter() {
+        document.getElementById('startDate').value = '';
+        document.getElementById('endDate').value = '';
+        dataStart = null;
+        dataEnd = null;
+        paginaAtual = 1;
+        renderizarEnvios();
+    }
+    
+    function filtrarPorErro() {
+        buscaErro = document.getElementById('searchErro').value.toLowerCase();
+        paginaAtual = 1;
+        renderizarEnvios();
+    }
+    
+    function limparBuscaErro() {
+        document.getElementById('searchErro').value = '';
+        buscaErro = '';
+        paginaAtual = 1;
+        renderizarEnvios();
+    }
+    
+    function renderizarEnvios() {
+        let dadosFiltrados = getDadosFiltrados();
+        const total = dadosFiltrados.length;
+        document.getElementById('totalEnvioCount').innerHTML = `(Total: ${total} contatos distintos)`;
+        
+        dadosFiltrados = ordenarDados(dadosFiltrados);
+        
+        const itensPorPagina = parseInt(document.getElementById('perPage').value);
+        const totalPaginas = Math.ceil(total / itensPorPagina);
+        const inicio = (paginaAtual - 1) * itensPorPagina;
+        const paginaDados = dadosFiltrados.slice(inicio, inicio + itensPorPagina);
+        
+        const tbody = document.getElementById('enviosTbody');
+        if (paginaDados.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7">Nenhum registro encontrado.</td></tr>';
+        } else {
+            let html = '';
+            for (let item of paginaDados) {
+                const telefoneNorm = normalizarTelefone(item.telefone);
+                const telefoneHtml = telefoneNorm ? `<a href="https://wa.me/${telefoneNorm}" target="_blank" style="background:#25D366; color:white; padding:4px 10px; border-radius:20px; text-decoration:none; font-size:12px; display:inline-block;">${escapeHtml(telefoneNorm)}</a>` : escapeHtml(item.telefone) || '-';
+                
+                let infoErro = '-';
+                if (item.codigo_erro) {
+                    infoErro = `<span class="error-code" onclick="mostrarModal('${item.codigo_erro}', '${escapeHtml(item.mensagem_erro || '').replace(/'/g, "\\'")}')">⚠️ Código ${item.codigo_erro}</span>`;
+                } else if (item.status === 'retry' && item.envios_count) {
+                    infoErro = `${item.envios_count} tentativa(s)`;
+                } else if (item.status === 'semwhatsapp') {
+                    infoErro = 'Número sem WhatsApp';
+                }
+                
+                html += `<tr>
+                    <td style="max-width: 200px; word-break: break-word;">${escapeHtml(formatarNome(item.nome))}</td>
+                    <td>${telefoneHtml}</td>
+                    <td>${escapeHtml(item.cargo || '-')}</td>
+                    <td>${escapeHtml(item.empresa || '-')}</td>
+                    <td>${getStatusBadge(item.status)}</td>
+                    <td>${formatarData(item.data)}</td>
+                    <td style="max-width: 200px;">${infoErro}</td>
+                </tr>`;
+            }
+            tbody.innerHTML = html;
+        }
+        
+        const pagContainer = document.getElementById('paginationEnvios');
+        if (totalPaginas <= 1) {
+            pagContainer.innerHTML = '';
+        } else {
+            let pagHtml = `<button onclick="mudarPagina(${paginaAtual - 1})" ${paginaAtual === 1 ? 'disabled' : ''}>◀ Anterior</button>`;
+            for (let i = 1; i <= Math.min(totalPaginas, 5); i++) {
+                pagHtml += `<button onclick="mudarPagina(${i})" class="${paginaAtual === i ? 'active-page' : ''}">${i}</button>`;
+            }
+            if (totalPaginas > 5) pagHtml += `<span>...</span><button onclick="mudarPagina(${totalPaginas})">${totalPaginas}</button>`;
+            pagHtml += `<button onclick="mudarPagina(${paginaAtual + 1})" ${paginaAtual === totalPaginas ? 'disabled' : ''}>Próxima ▶</button>`;
+            pagHtml += `<span class="page-info">Página ${paginaAtual} de ${totalPaginas}</span>`;
+            pagContainer.innerHTML = pagHtml;
+        }
+    }
+    
+    function mudarPagina(novaPagina) {
+        paginaAtual = novaPagina;
+        renderizarEnvios();
+    }
+    
+    function configurarOrdenacao() {
+        const headers = document.querySelectorAll('#enviosTable th.sortable');
+        headers.forEach(header => {
+            header.addEventListener('click', () => {
+                const coluna = header.getAttribute('data-sort');
+                headers.forEach(h => h.classList.remove('asc', 'desc'));
+                if (ordenacao.coluna === coluna) {
+                    ordenacao.ordem = ordenacao.ordem === 'asc' ? 'desc' : 'asc';
+                } else {
+                    ordenacao.coluna = coluna;
+                    ordenacao.ordem = 'asc';
+                }
+                header.classList.add(ordenacao.ordem);
+                renderizarEnvios();
+            });
+        });
+    }
+    
+    async function loadData() {
+        try {
+            const response = await fetch(API_URL);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            const resultado = data.resultado;
+            document.getElementById('last-update').innerHTML = `Última atualização: ${new Date(resultado.atualizado_em).toLocaleString('pt-BR')}`;
+            const campanha = resultado.campanha;
+            const status = resultado.status_mensagens;
+            
+            processarDadosDistintos(resultado);
+            renderizarEnvios();
+            configurarOrdenacao();
+            
+            document.getElementById('filterStatus').addEventListener('change', () => {
+                filtroStatus = document.getElementById('filterStatus').value;
+                paginaAtual = 1;
+                renderizarEnvios();
+            });
+            
+            const cards = document.querySelectorAll('.card');
+            cards[0].querySelector('.number').innerText = campanha.total;
+            cards[1].querySelector('.number').innerText = campanha.respondeu_sim;
+            cards[2].querySelector('.number').innerText = campanha.respondeu_nao;
+            cards[3].querySelector('.number').innerText = campanha.sem_resposta;
+            cards[4].querySelector('.number').innerText = campanha.enviados;
+            cards[5].querySelector('.number').innerText = campanha.nao_enviados;
+            
+            const ctxRespostas = document.getElementById('respostasChart').getContext('2d');
+            if (charts.respostas) charts.respostas.destroy();
+            charts.respostas = new Chart(ctxRespostas, {
+                type: 'bar', data: { labels: ['✅ SIM', '❌ NÃO', '📭 Sem resposta'], datasets: [{ label: 'Quantidade', data: [campanha.respondeu_sim, campanha.respondeu_nao, campanha.sem_resposta], backgroundColor: ['#28a745', '#dc3545', '#ffc107'], borderRadius: 6 }] },
+                options: { responsive: true, plugins: { legend: { position: 'top' } } }
+            });
+            
+            const tentativas = campanha.tentativas;
+            const ctxTentativas = document.getElementById('tentativasChart').getContext('2d');
+            if (charts.tentativas) charts.tentativas.destroy();
+            charts.tentativas = new Chart(ctxTentativas, {
+                type: 'pie', data: { labels: ['1ª tentativa', '2ª tentativa', '3ª tentativa', '4+ tentativas'], datasets: [{ data: [tentativas.t1, tentativas.t2, tentativas.t3, tentativas.t4], backgroundColor: ['#007bff', '#6c757d', '#28a745', '#fd7e14'] }] },
+                options: { responsive: true, plugins: { legend: { position: 'right' } } }
+            });
+            
+            const tableBody = document.querySelector('#statusTable tbody');
+            tableBody.innerHTML = '';
+            for (const [stat, total] of Object.entries(status)) {
+                const row = tableBody.insertRow();
+                row.insertCell(0).innerText = statusTraducao[stat] || stat;
+                row.insertCell(1).innerText = total;
+            }
+        } catch (error) {
+            document.getElementById('last-update').innerHTML = 'Erro ao carregar dados';
+            console.error('Erro:', error);
+        }
+    }
+    
+    document.getElementById('refreshBtn').addEventListener('click', () => loadData());
+    loadData();
+</script>
+</body>
+</html>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; }
         .container { max-width: 1400px; margin: 0 auto; }
         .header-flex { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 10px; }
