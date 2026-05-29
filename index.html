@@ -208,7 +208,6 @@
         .pagination button:hover:not(:disabled) { background: #007bff; color: white; }
         .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
         .pagination .active-page { background: #075E54; color: white; }
-        .total-count { margin-left: 20px; color: #666; font-size: 14px; }
         
         .status-table { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-top: 20px; }
         .status-table h2 { font-size: 1.2em; margin-bottom: 15px; color: #333; }
@@ -274,12 +273,12 @@
     </div>
 
     <div class="cards" id="cards">
-        <div class="card"><h3>Total de Contatos</h3><div class="number">-</div></div>
-        <div class="card"><h3>✅ Responderam SIM</h3><div class="number">-</div></div>
-        <div class="card"><h3>❌ Responderam NÃO</h3><div class="number">-</div></div>
-        <div class="card"><h3>📭 Sem Resposta</h3><div class="number">-</div></div>
-        <div class="card"><h3>📨 Enviados</h3><div class="number">-</div></div>
-        <div class="card"><h3>⏳ Não Enviados</h3><div class="number">-</div></div>
+        <div class="card"><h3>Total de Contatos</h3><div class="number" id="totalContatos">-</div></div>
+        <div class="card"><h3>✅ Responderam SIM</h3><div class="number" id="totalSim">-</div></div>
+        <div class="card"><h3>❌ Responderam NÃO</h3><div class="number" id="totalNao">-</div></div>
+        <div class="card"><h3>📭 Sem Resposta</h3><div class="number" id="totalSemResposta">-</div></div>
+        <div class="card"><h3>📨 Enviados</h3><div class="number" id="totalEnviados">-</div></div>
+        <div class="card"><h3>⏳ Não Enviados</h3><div class="number" id="totalNaoEnviados">-</div></div>
     </div>
 
     <div class="charts-row">
@@ -346,7 +345,7 @@
                     </tr>
                 </thead>
                 <tbody id="enviosTbody">
-                    <tr><td colspan="7" class="loading">Carregando dados...</td></tr>
+                    <tr><td colspan="7" class="loading">Carregando dados...<\/td><\/tr>
                 </tbody>
             </table>
         </div>
@@ -357,7 +356,7 @@
         <h2>📲 Status das Mensagens (Agregado)</h2>
         <table id="statusTable">
             <thead><tr><th>Status</th><th>Quantidade</th></tr></thead>
-            <tbody><tr><td colspan="2" class="loading">Carregando...</td></tr></tbody>
+            <tbody><tr><td colspan="2" class="loading">Carregando...<\/td><\/tr></tbody>
         </table>
     </div>
     <footer>Clique no título da coluna para ordenar | Clique no código de erro para ver detalhes</footer>
@@ -406,6 +405,8 @@
     }
     
     function fecharModal() { document.getElementById('errorModal').style.display = 'none'; }
+    document.querySelector('.close-modal').onclick = fecharModal;
+    window.onclick = function(event) { if (event.target === document.getElementById('errorModal')) fecharModal(); };
     
     function formatarNome(nomeCompleto) {
         if (!nomeCompleto || nomeCompleto === 'Não identificado') return 'Não identificado';
@@ -431,7 +432,12 @@
     
     function escapeHtml(value) {
         if (value === null || value === undefined) return '';
-        return String(value).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]);
+        return String(value).replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
     }
     
     function getStatusBadge(status) {
@@ -449,109 +455,118 @@
     function processarDadosDistintos(resultado) {
         const mapa = new Map();
         
-        (resultado.lista_sim || []).forEach(item => {
-            const telefone = normalizarTelefone(item.telefone);
-            if (!mapa.has(telefone)) {
-                mapa.set(telefone, {
-                    nome: item.nome,
-                    telefone: item.telefone,
-                    cargo: item.cargo,
-                    empresa: item.empresa,
-                    status: 'sim',
-                    data: item.respondido_em,
-                    codigo_erro: null,
-                    mensagem_erro: null,
-                    detalhes: `Respondeu SIM usando template: ${item.template_enviado || 'N/A'}`
-                });
-            }
-        });
+        // Respostas SIM
+        if (resultado.lista_sim && Array.isArray(resultado.lista_sim)) {
+            resultado.lista_sim.forEach(item => {
+                const telefone = normalizarTelefone(item.telefone);
+                if (!mapa.has(telefone)) {
+                    mapa.set(telefone, {
+                        nome: item.nome,
+                        telefone: item.telefone,
+                        cargo: item.cargo,
+                        empresa: item.empresa,
+                        status: 'sim',
+                        data: item.respondido_em,
+                        detalhes: `Respondeu SIM - Template: ${item.template_enviado || 'N/A'}`
+                    });
+                }
+            });
+        }
         
-        (resultado.lista_nao || []).forEach(item => {
-            const telefone = normalizarTelefone(item.telefone);
-            if (!mapa.has(telefone)) {
-                mapa.set(telefone, {
-                    nome: item.nome,
-                    telefone: item.telefone,
-                    cargo: item.cargo,
-                    empresa: item.empresa,
-                    status: 'nao',
-                    data: item.respondido_em,
-                    codigo_erro: null,
-                    mensagem_erro: null,
-                    detalhes: `Respondeu NÃO usando template: ${item.template_enviado || 'N/A'}`
-                });
-            }
-        });
+        // Respostas NÃO
+        if (resultado.lista_nao && Array.isArray(resultado.lista_nao)) {
+            resultado.lista_nao.forEach(item => {
+                const telefone = normalizarTelefone(item.telefone);
+                if (!mapa.has(telefone)) {
+                    mapa.set(telefone, {
+                        nome: item.nome,
+                        telefone: item.telefone,
+                        cargo: item.cargo,
+                        empresa: item.empresa,
+                        status: 'nao',
+                        data: item.respondido_em,
+                        detalhes: `Respondeu NÃO - Template: ${item.template_enviado || 'N/A'}`
+                    });
+                }
+            });
+        }
         
-        (resultado.lista_falhas || []).forEach(item => {
-            const telefone = normalizarTelefone(item.telefone);
-            if (!mapa.has(telefone)) {
-                mapa.set(telefone, {
-                    nome: item.nome,
-                    telefone: item.telefone,
-                    cargo: null,
-                    empresa: null,
-                    status: 'falha',
-                    data: item.timestamp,
-                    codigo_erro: item.codigo_erro,
-                    mensagem_erro: item.mensagem_erro,
-                    detalhes: `<span class="error-code" onclick="mostrarModal('${item.codigo_erro}', '${escapeHtml(item.mensagem_erro || '').replace(/'/g, "\\'")}')">⚠️ Código ${item.codigo_erro}</span>`
-                });
-            }
-        });
+        // Falhas
+        if (resultado.lista_falhas && Array.isArray(resultado.lista_falhas)) {
+            resultado.lista_falhas.forEach(item => {
+                const telefone = normalizarTelefone(item.telefone);
+                if (!mapa.has(telefone)) {
+                    mapa.set(telefone, {
+                        nome: item.nome,
+                        telefone: item.telefone,
+                        cargo: null,
+                        empresa: null,
+                        status: 'falha',
+                        data: item.timestamp,
+                        codigo_erro: item.codigo_erro,
+                        mensagem_erro: item.mensagem_erro,
+                        detalhes: `<span class="error-code" onclick="mostrarModal('${item.codigo_erro}', '${escapeHtml(item.mensagem_erro || '').replace(/'/g, "\\'")}')">⚠️ Código ${item.codigo_erro}</span>`
+                    });
+                }
+            });
+        }
         
-        (resultado.lista_retry || []).forEach(item => {
-            const telefone = normalizarTelefone(item.telefone);
-            if (!mapa.has(telefone)) {
-                mapa.set(telefone, {
-                    nome: item.nome,
-                    telefone: item.telefone,
-                    cargo: item.cargo,
-                    empresa: item.empresa,
-                    status: 'retry',
-                    data: item.bloqueio_em,
-                    codigo_erro: null,
-                    mensagem_erro: null,
-                    detalhes: `${item.envios_count || 'Múltiplas'} tentativa(s) sem sucesso`
-                });
-            }
-        });
+        // RETRY
+        if (resultado.lista_retry && Array.isArray(resultado.lista_retry)) {
+            resultado.lista_retry.forEach(item => {
+                const telefone = normalizarTelefone(item.telefone);
+                if (!mapa.has(telefone)) {
+                    mapa.set(telefone, {
+                        nome: item.nome,
+                        telefone: item.telefone,
+                        cargo: item.cargo,
+                        empresa: item.empresa,
+                        status: 'retry',
+                        data: item.bloqueio_em,
+                        detalhes: `${item.envios_count || 'Múltiplas'} tentativa(s) sem sucesso`
+                    });
+                }
+            });
+        }
         
-        (resultado.lista_lgpd || []).forEach(item => {
-            const telefone = normalizarTelefone(item.telefone);
-            if (!mapa.has(telefone)) {
-                mapa.set(telefone, {
-                    nome: item.nome,
-                    telefone: item.telefone,
-                    cargo: item.cargo,
-                    empresa: item.empresa,
-                    status: 'lgpd',
-                    data: item.bloqueio_em,
-                    codigo_erro: null,
-                    mensagem_erro: null,
-                    detalhes: 'Bloqueado por solicitação LGPD'
-                });
-            }
-        });
+        // LGPD
+        if (resultado.lista_lgpd && Array.isArray(resultado.lista_lgpd)) {
+            resultado.lista_lgpd.forEach(item => {
+                const telefone = normalizarTelefone(item.telefone);
+                if (!mapa.has(telefone)) {
+                    mapa.set(telefone, {
+                        nome: item.nome,
+                        telefone: item.telefone,
+                        cargo: item.cargo,
+                        empresa: item.empresa,
+                        status: 'lgpd',
+                        data: item.bloqueio_em,
+                        detalhes: 'Bloqueado por solicitação LGPD'
+                    });
+                }
+            });
+        }
         
-        (resultado.lista_sem_whatsapp || []).forEach(item => {
-            const telefone = normalizarTelefone(item.telefone);
-            if (!mapa.has(telefone)) {
-                mapa.set(telefone, {
-                    nome: item.nome,
-                    telefone: item.telefone,
-                    cargo: item.cargo,
-                    empresa: item.empresa,
-                    status: 'semwhatsapp',
-                    data: item.validado_em,
-                    codigo_erro: null,
-                    mensagem_erro: null,
-                    detalhes: 'Número não possui WhatsApp válido'
-                });
-            }
-        });
+        // Sem WhatsApp
+        if (resultado.lista_sem_whatsapp && Array.isArray(resultado.lista_sem_whatsapp)) {
+            resultado.lista_sem_whatsapp.forEach(item => {
+                const telefone = normalizarTelefone(item.telefone);
+                if (!mapa.has(telefone)) {
+                    mapa.set(telefone, {
+                        nome: item.nome,
+                        telefone: item.telefone,
+                        cargo: item.cargo,
+                        empresa: item.empresa,
+                        status: 'semwhatsapp',
+                        data: item.validado_em,
+                        detalhes: 'Número não possui WhatsApp válido'
+                    });
+                }
+            });
+        }
         
         enviosDistintos = Array.from(mapa.values());
+        console.log('Total de contatos distintos:', enviosDistintos.length);
     }
     
     function ordenarDados(dados) {
@@ -608,7 +623,7 @@
             dados = dados.filter(item => 
                 (item.codigo_erro && String(item.codigo_erro).toLowerCase().includes(buscaErro)) ||
                 (item.mensagem_erro && item.mensagem_erro.toLowerCase().includes(buscaErro)) ||
-                (item.detalhes && item.detalhes.toLowerCase().includes(buscaErro))
+                (item.detalhes && String(item.detalhes).toLowerCase().includes(buscaErro))
             );
         }
         
@@ -689,22 +704,22 @@
         
         const tbody = document.getElementById('enviosTbody');
         if (paginaDados.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7">Nenhum registro encontrado.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7">Nenhum registro encontrado.<\/td><\/tr>';
         } else {
             let html = '';
             for (let item of paginaDados) {
                 const telefoneNorm = normalizarTelefone(item.telefone);
-                const telefoneHtml = telefoneNorm ? `<a href="https://wa.me/${telefoneNorm}" target="_blank" style="background:#25D366; color:white; padding:4px 10px; border-radius:20px; text-decoration:none; font-size:12px; display:inline-block;">${escapeHtml(telefoneNorm)}</a>` : escapeHtml(item.telefone) || '-';
+                const telefoneHtml = telefoneNorm ? `<a href="https://wa.me/${telefoneNorm}" target="_blank" style="background:#25D366; color:white; padding:4px 10px; border-radius:20px; text-decoration:none; font-size:12px; display:inline-block;">${escapeHtml(telefoneNorm)}<\/a>` : escapeHtml(item.telefone) || '-';
                 
                 html += `<tr>
-                    <td style="max-width: 200px; word-break: break-word;">${escapeHtml(formatarNome(item.nome))}</td>
-                    <td>${telefoneHtml}</td>
-                    <td>${escapeHtml(item.cargo || '-')}</td>
-                    <td>${escapeHtml(item.empresa || '-')}</td>
-                    <td>${getStatusBadge(item.status)}</td>
-                    <td>${formatarData(item.data)}</td>
-                    <td style="max-width: 200px;">${item.detalhes || '-'}</td>
-                </tr>`;
+                    <td style="max-width: 200px; word-break: break-word;">${escapeHtml(formatarNome(item.nome))}<\/td>
+                    <td>${telefoneHtml}<\/td>
+                    <td>${escapeHtml(item.cargo || '-')}<\/td>
+                    <td>${escapeHtml(item.empresa || '-')}<\/td>
+                    <td>${getStatusBadge(item.status)}<\/td>
+                    <td>${formatarData(item.data)}<\/td>
+                    <td style="max-width: 200px;">${item.detalhes || '-'}<\/td>
+                <\/tr>`;
             }
             tbody.innerHTML = html;
         }
@@ -714,15 +729,3 @@
             pagContainer.innerHTML = '';
         } else {
             let pagHtml = `<button onclick="mudarPagina(${paginaAtual - 1})" ${paginaAtual === 1 ? 'disabled' : ''}>◀ Anterior</button>`;
-            for (let i = 1; i <= Math.min(totalPaginas, 5); i++) {
-                pagHtml += `<button onclick="mudarPagina(${i})" class="${paginaAtual === i ? 'active-page' : ''}">${i}</button>`;
-            }
-            if (totalPaginas > 5) pagHtml += `<span>...</span><button onclick="mudarPagina(${totalPaginas})">${totalPaginas}</button>`;
-            pagHtml += `<button onclick="mudarPagina(${paginaAtual + 1})" ${paginaAtual === totalPaginas ? 'disabled' : ''}>Próxima ▶</button>`;
-            pagHtml += `<span class="page-info">Página ${paginaAtual} de ${totalPaginas}</span>`;
-            pagContainer.innerHTML = pagHtml;
-        }
-    }
-    
-    function mudarPagina(novaPagina) {
-       
