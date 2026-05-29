@@ -179,6 +179,7 @@
         .status-badge.retry { background: #17a2b8; color: white; }
         .status-badge.lgpd { background: #6c757d; color: white; }
         .status-badge.semwhatsapp { background: #fd7e14; color: white; }
+        .status-badge.enviado { background: #17a2b8; color: white; }
         .error-code {
             cursor: pointer;
             background: #fff3cd;
@@ -317,6 +318,7 @@
                     <option value="all">Todos os status</option>
                     <option value="sim">✅ Responderam SIM</option>
                     <option value="nao">❌ Responderam NÃO</option>
+                    <option value="enviado">📨 Aguardando resposta</option>
                     <option value="falha">⚠️ Falha no envio</option>
                     <option value="retry">🔄 Bloqueio (RETRY)</option>
                     <option value="lgpd">🔒 Bloqueio LGPD</option>
@@ -336,7 +338,7 @@
                 <thead>
                     <tr>
                         <th data-sort="nome" class="sortable">Nome <span class="sort-icon">▼</span></th>
-                        <th data-sort="telefone">Telefone</th>
+                        <th data-sort="tipoContato">Tipo de Contato</th>
                         <th data-sort="cargo">Cargo</th>
                         <th data-sort="empresa">Empresa</th>
                         <th data-sort="status">Status <span class="sort-icon">▼</span></th>
@@ -440,149 +442,158 @@
         });
     }
     
-function getStatusBadge(status) {
-    const badges = {
-        'sim': '<span class="status-badge sim">✅ SIM</span>',
-        'nao': '<span class="status-badge nao">❌ NÃO</span>',
-        'falha': '<span class="status-badge falha">⚠️ Falha</span>',
-        'retry': '<span class="status-badge retry">🔄 Retentativa</span>',
-        'lgpd': '<span class="status-badge lgpd">🔒 LGPD</span>',
-        'semwhatsapp': '<span class="status-badge semwhatsapp">📵 Sem WhatsApp</span>',
-        'enviado': '<span class="status-badge" style="background:#17a2b8; color:white;">📨 Aguardando resposta</span>'
-    };
-    return badges[status] || '<span class="status-badge">📨 Enviado</span>';
-}
+    function getStatusBadge(status) {
+        const badges = {
+            'sim': '<span class="status-badge sim">✅ SIM</span>',
+            'nao': '<span class="status-badge nao">❌ NÃO</span>',
+            'falha': '<span class="status-badge falha">⚠️ Falha</span>',
+            'retry': '<span class="status-badge retry">🔄 Bloqueio (RETRY)</span>',
+            'lgpd': '<span class="status-badge lgpd">🔒 Bloqueio LGPD</span>',
+            'semwhatsapp': '<span class="status-badge semwhatsapp">📵 Sem WhatsApp</span>',
+            'enviado': '<span class="status-badge enviado" style="background:#17a2b8; color:white;">📨 Aguardando</span>'
+        };
+        return badges[status] || '<span class="status-badge">📨 Enviado</span>';
+    }
+    
+    function getTipoContato(item) {
+        if (item.status === 'falha') return 'Falha no envio';
+        if (item.status === 'retry') return 'Bloqueio (RETRY)';
+        if (item.status === 'lgpd') return 'Bloqueio LGPD';
+        if (item.status === 'semwhatsapp') return 'Sem WhatsApp';
+        if (item.status === 'enviado') return 'Aguardando resposta';
+        return '-';
+    }
     
     function processarDadosDistintos(resultado) {
-    const mapa = new Map();
-    
-    // Primeiro, registrar TODOS os enviados (para base)
-    if (resultado.lista_enviados && Array.isArray(resultado.lista_enviados)) {
-        resultado.lista_enviados.forEach(item => {
-            const telefone = normalizarTelefone(item.telefone);
-            if (!mapa.has(telefone)) {
-                mapa.set(telefone, {
-                    nome: item.nome,
-                    telefone: item.telefone,
-                    cargo: item.cargo,
-                    empresa: item.empresa,
-                    status: 'enviado',
-                    data: item.enviado_em,
-                    detalhes: `Mensagem enviada em ${formatarData(item.enviado_em)} - Aguardando resposta`
-                });
-            }
-        });
-    }
-    
-    // Respostas SIM (sobrescreve enviado)
-    if (resultado.lista_sim && Array.isArray(resultado.lista_sim)) {
-        resultado.lista_sim.forEach(item => {
-            const telefone = normalizarTelefone(item.telefone);
-            mapa.set(telefone, {
-                nome: item.nome,
-                telefone: item.telefone,
-                cargo: item.cargo,
-                empresa: item.empresa,
-                status: 'sim',
-                data: item.respondido_em,
-                detalhes: `Respondeu SIM - Template: ${item.template_enviado || 'N/A'}`
+        const mapa = new Map();
+        
+        // Adicionar enviados sem resposta (se a API retornar lista_enviados)
+        if (resultado.lista_enviados && Array.isArray(resultado.lista_enviados)) {
+            resultado.lista_enviados.forEach(item => {
+                const telefone = normalizarTelefone(item.telefone);
+                if (!mapa.has(telefone)) {
+                    mapa.set(telefone, {
+                        nome: item.nome,
+                        telefone: item.telefone,
+                        cargo: item.cargo || '-',
+                        empresa: item.empresa || '-',
+                        status: 'enviado',
+                        data: item.enviado_em,
+                        detalhes: `Mensagem enviada - Aguardando resposta`
+                    });
+                }
             });
-        });
-    }
-    
-    // Respostas NÃO (sobrescreve enviado)
-    if (resultado.lista_nao && Array.isArray(resultado.lista_nao)) {
-        resultado.lista_nao.forEach(item => {
-            const telefone = normalizarTelefone(item.telefone);
-            mapa.set(telefone, {
-                nome: item.nome,
-                telefone: item.telefone,
-                cargo: item.cargo,
-                empresa: item.empresa,
-                status: 'nao',
-                data: item.respondido_em,
-                detalhes: `Respondeu NÃO - Template: ${item.template_enviado || 'N/A'}`
+        }
+        
+        // Respostas SIM
+        if (resultado.lista_sim && Array.isArray(resultado.lista_sim)) {
+            resultado.lista_sim.forEach(item => {
+                const telefone = normalizarTelefone(item.telefone);
+                mapa.set(telefone, {
+                    nome: item.nome,
+                    telefone: item.telefone,
+                    cargo: item.cargo || '-',
+                    empresa: item.empresa || '-',
+                    status: 'sim',
+                    data: item.respondido_em,
+                    detalhes: `Respondeu SIM - Template: ${item.template_enviado || 'N/A'}`
+                });
             });
-        });
-    }
-    
-    // Falhas
-    if (resultado.lista_falhas && Array.isArray(resultado.lista_falhas)) {
-        resultado.lista_falhas.forEach(item => {
-            const telefone = normalizarTelefone(item.telefone);
-            if (!mapa.has(telefone)) {
+        }
+        
+        // Respostas NÃO
+        if (resultado.lista_nao && Array.isArray(resultado.lista_nao)) {
+            resultado.lista_nao.forEach(item => {
+                const telefone = normalizarTelefone(item.telefone);
                 mapa.set(telefone, {
                     nome: item.nome,
                     telefone: item.telefone,
-                    cargo: null,
-                    empresa: null,
-                    status: 'falha',
-                    data: item.timestamp,
-                    codigo_erro: item.codigo_erro,
-                    mensagem_erro: item.mensagem_erro,
-                    detalhes: `<span class="error-code" onclick="mostrarModal('${item.codigo_erro}', '${escapeHtml(item.mensagem_erro || '').replace(/'/g, "\\'")}')">⚠️ Código ${item.codigo_erro}</span>`
+                    cargo: item.cargo || '-',
+                    empresa: item.empresa || '-',
+                    status: 'nao',
+                    data: item.respondido_em,
+                    detalhes: `Respondeu NÃO - Template: ${item.template_enviado || 'N/A'}`
                 });
-            }
-        });
+            });
+        }
+        
+        // Falhas
+        if (resultado.lista_falhas && Array.isArray(resultado.lista_falhas)) {
+            resultado.lista_falhas.forEach(item => {
+                const telefone = normalizarTelefone(item.telefone);
+                if (!mapa.has(telefone)) {
+                    mapa.set(telefone, {
+                        nome: item.nome,
+                        telefone: item.telefone,
+                        cargo: item.cargo || '-',
+                        empresa: item.empresa || '-',
+                        status: 'falha',
+                        data: item.timestamp,
+                        codigo_erro: item.codigo_erro,
+                        mensagem_erro: item.mensagem_erro,
+                        detalhes: `<span class="error-code" onclick="mostrarModal('${item.codigo_erro}', '${escapeHtml(item.mensagem_erro || '').replace(/'/g, "\\'")}')">⚠️ Código ${item.codigo_erro}</span>`
+                    });
+                }
+            });
+        }
+        
+        // RETRY
+        if (resultado.lista_retry && Array.isArray(resultado.lista_retry)) {
+            resultado.lista_retry.forEach(item => {
+                const telefone = normalizarTelefone(item.telefone);
+                if (!mapa.has(telefone)) {
+                    mapa.set(telefone, {
+                        nome: item.nome,
+                        telefone: item.telefone,
+                        cargo: item.cargo || '-',
+                        empresa: item.empresa || '-',
+                        status: 'retry',
+                        data: item.bloqueio_em,
+                        detalhes: `${item.envios_count || 'Múltiplas'} tentativa(s) sem sucesso`
+                    });
+                }
+            });
+        }
+        
+        // LGPD
+        if (resultado.lista_lgpd && Array.isArray(resultado.lista_lgpd)) {
+            resultado.lista_lgpd.forEach(item => {
+                const telefone = normalizarTelefone(item.telefone);
+                if (!mapa.has(telefone)) {
+                    mapa.set(telefone, {
+                        nome: item.nome,
+                        telefone: item.telefone,
+                        cargo: item.cargo || '-',
+                        empresa: item.empresa || '-',
+                        status: 'lgpd',
+                        data: item.bloqueio_em,
+                        detalhes: 'Bloqueado por solicitação LGPD'
+                    });
+                }
+            });
+        }
+        
+        // Sem WhatsApp
+        if (resultado.lista_sem_whatsapp && Array.isArray(resultado.lista_sem_whatsapp)) {
+            resultado.lista_sem_whatsapp.forEach(item => {
+                const telefone = normalizarTelefone(item.telefone);
+                if (!mapa.has(telefone)) {
+                    mapa.set(telefone, {
+                        nome: item.nome,
+                        telefone: item.telefone,
+                        cargo: item.cargo || '-',
+                        empresa: item.empresa || '-',
+                        status: 'semwhatsapp',
+                        data: item.validado_em,
+                        detalhes: 'Número não possui WhatsApp válido'
+                    });
+                }
+            });
+        }
+        
+        enviosDistintos = Array.from(mapa.values());
+        console.log('Total de contatos distintos:', enviosDistintos.length);
     }
-    
-    // RETRY
-    if (resultado.lista_retry && Array.isArray(resultado.lista_retry)) {
-        resultado.lista_retry.forEach(item => {
-            const telefone = normalizarTelefone(item.telefone);
-            if (!mapa.has(telefone)) {
-                mapa.set(telefone, {
-                    nome: item.nome,
-                    telefone: item.telefone,
-                    cargo: item.cargo,
-                    empresa: item.empresa,
-                    status: 'retry',
-                    data: item.bloqueio_em,
-                    detalhes: `${item.envios_count || 'Múltiplas'} tentativa(s) sem sucesso`
-                });
-            }
-        });
-    }
-    
-    // LGPD
-    if (resultado.lista_lgpd && Array.isArray(resultado.lista_lgpd)) {
-        resultado.lista_lgpd.forEach(item => {
-            const telefone = normalizarTelefone(item.telefone);
-            if (!mapa.has(telefone)) {
-                mapa.set(telefone, {
-                    nome: item.nome,
-                    telefone: item.telefone,
-                    cargo: item.cargo,
-                    empresa: item.empresa,
-                    status: 'lgpd',
-                    data: item.bloqueio_em,
-                    detalhes: 'Bloqueado por solicitação LGPD'
-                });
-            }
-        });
-    }
-    
-    // Sem WhatsApp
-    if (resultado.lista_sem_whatsapp && Array.isArray(resultado.lista_sem_whatsapp)) {
-        resultado.lista_sem_whatsapp.forEach(item => {
-            const telefone = normalizarTelefone(item.telefone);
-            if (!mapa.has(telefone)) {
-                mapa.set(telefone, {
-                    nome: item.nome,
-                    telefone: item.telefone,
-                    cargo: item.cargo,
-                    empresa: item.empresa,
-                    status: 'semwhatsapp',
-                    data: item.validado_em,
-                    detalhes: 'Número não possui WhatsApp válido'
-                });
-            }
-        });
-    }
-    
-    enviosDistintos = Array.from(mapa.values());
-    console.log('Total de contatos distintos:', enviosDistintos.length);
-}
     
     function ordenarDados(dados) {
         return [...dados].sort((a, b) => {
@@ -592,9 +603,9 @@ function getStatusBadge(status) {
                     valA = (a.nome || '').toLowerCase();
                     valB = (b.nome || '').toLowerCase();
                     break;
-                case 'telefone':
-                    valA = normalizarTelefone(a.telefone) || '';
-                    valB = normalizarTelefone(b.telefone) || '';
+                case 'tipoContato':
+                    valA = getTipoContato(a);
+                    valB = getTipoContato(b);
                     break;
                 case 'cargo':
                     valA = (a.cargo || '').toLowerCase();
@@ -719,7 +730,7 @@ function getStatusBadge(status) {
         
         const tbody = document.getElementById('enviosTbody');
         if (paginaDados.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7">Nenhum registro encontrado.<\/td><\/tr>';
+            tbody.innerHTML = '<tr><td colspan="7">Nenhum registro encontrado.</td></tr>';
         } else {
             let html = '';
             for (let item of paginaDados) {
@@ -727,14 +738,14 @@ function getStatusBadge(status) {
                 const telefoneHtml = telefoneNorm ? `<a href="https://wa.me/${telefoneNorm}" target="_blank" style="background:#25D366; color:white; padding:4px 10px; border-radius:20px; text-decoration:none; font-size:12px; display:inline-block;">${escapeHtml(telefoneNorm)}<\/a>` : escapeHtml(item.telefone) || '-';
                 
                 html += `<tr>
-                    <td style="max-width: 200px; word-break: break-word;">${escapeHtml(formatarNome(item.nome))}<\/td>
-                    <td>${telefoneHtml}<\/td>
-                    <td>${escapeHtml(item.cargo || '-')}<\/td>
-                    <td>${escapeHtml(item.empresa || '-')}<\/td>
-                    <td>${getStatusBadge(item.status)}<\/td>
-                    <td>${formatarData(item.data)}<\/td>
-                    <td style="max-width: 200px;">${item.detalhes || '-'}<\/td>
-                <\/tr>`;
+                    <td style="max-width: 200px; word-break: break-word;">${escapeHtml(formatarNome(item.nome))}<br><small>${telefoneHtml}</small></td>
+                    <td>${getTipoContato(item)}</td>
+                    <td>${escapeHtml(item.cargo || '-')}</td>
+                    <td>${escapeHtml(item.empresa || '-')}</td>
+                    <td>${getStatusBadge(item.status)}</td>
+                    <td>${formatarData(item.data)}</td>
+                    <td style="max-width: 200px;">${item.detalhes || '-'}</td>
+                </tr>`;
             }
             tbody.innerHTML = html;
         }
@@ -785,15 +796,12 @@ function getStatusBadge(status) {
             const data = await response.json();
             console.log('Dados recebidos:', data);
             
-            // Acessa resultado corretamente
             const resultado = data.resultado || data;
             
-            // Atualiza data de atualização
             if (resultado.atualizado_em) {
                 document.getElementById('last-update').innerHTML = `Última atualização: ${new Date(resultado.atualizado_em).toLocaleString('pt-BR')}`;
             }
             
-            // Atualiza cards da campanha
             const campanha = resultado.campanha || {};
             document.getElementById('totalContatos').innerText = campanha.total || 0;
             document.getElementById('totalSim').innerText = campanha.respondeu_sim || 0;
@@ -802,7 +810,6 @@ function getStatusBadge(status) {
             document.getElementById('totalEnviados').innerText = campanha.enviados || 0;
             document.getElementById('totalNaoEnviados').innerText = campanha.nao_enviados || 0;
             
-            // Gráfico de respostas
             const ctxRespostas = document.getElementById('respostasChart').getContext('2d');
             if (charts.respostas) charts.respostas.destroy();
             charts.respostas = new Chart(ctxRespostas, {
@@ -819,7 +826,6 @@ function getStatusBadge(status) {
                 options: { responsive: true, plugins: { legend: { position: 'top' } } }
             });
             
-            // Gráfico de tentativas
             const tentativas = campanha.tentativas || { t1: 0, t2: 0, t3: 0, t4: 0 };
             const ctxTentativas = document.getElementById('tentativasChart').getContext('2d');
             if (charts.tentativas) charts.tentativas.destroy();
@@ -835,12 +841,10 @@ function getStatusBadge(status) {
                 options: { responsive: true, plugins: { legend: { position: 'right' } } }
             });
             
-            // Processa dados distintos e atualiza tabela
             processarDadosDistintos(resultado);
             renderizarEnvios();
             configurarOrdenacao();
             
-            // Tabela de status das mensagens
             const status = resultado.status_mensagens || {};
             const tableBody = document.querySelector('#statusTable tbody');
             tableBody.innerHTML = '';
@@ -850,7 +854,6 @@ function getStatusBadge(status) {
                 row.insertCell(1).innerText = total;
             }
             
-            // Filtro de status
             document.getElementById('filterStatus').addEventListener('change', function() {
                 filtroStatus = this.value;
                 paginaAtual = 1;
