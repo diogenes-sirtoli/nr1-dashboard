@@ -180,6 +180,7 @@
         .status-badge.lgpd { background: #6c757d; color: white; }
         .status-badge.semwhatsapp { background: #fd7e14; color: white; }
         .status-badge.enviado { background: #17a2b8; color: white; }
+        .status-badge.read { background: #8e44ad; color: white; }
         .error-code {
             cursor: pointer;
             background: #fff3cd;
@@ -319,6 +320,7 @@
                     <option value="sim">✅ Responderam SIM</option>
                     <option value="nao">❌ Responderam NÃO</option>
                     <option value="enviado">📨 Aguardando resposta</option>
+                    <option value="read">👁️ Lidas</option>
                     <option value="falha">⚠️ Falha no envio</option>
                     <option value="retry">🔄 Bloqueio (RETRY)</option>
                     <option value="lgpd">🔒 Bloqueio LGPD</option>
@@ -357,8 +359,10 @@
     <div class="status-table">
         <h2>📲 Status das Mensagens (Agregado)</h2>
         <table id="statusTable">
-            <thead><tr><th>Status</th><th>Quantidade</th></tr></thead>
-            <tbody><tr><td colspan="2" class="loading">Carregando...</td></tr></tbody>
+            <thead><tr><th>Status</th><th>Quantidade</th></tr>
+            </thead>
+            <tbody><tr><td colspan="2" class="loading">Carregando...</td></tr>
+            </tbody>
         </table>
     </div>
     <footer>Clique no título da coluna para ordenar | Clique no código de erro para ver detalhes</footer>
@@ -450,7 +454,8 @@
             'retry': '<span class="status-badge retry">🔄 Bloqueio (RETRY)</span>',
             'lgpd': '<span class="status-badge lgpd">🔒 Bloqueio LGPD</span>',
             'semwhatsapp': '<span class="status-badge semwhatsapp">📵 Sem WhatsApp</span>',
-            'enviado': '<span class="status-badge enviado" style="background:#17a2b8; color:white;">📨 Enviado</span>'
+            'enviado': '<span class="status-badge enviado" style="background:#17a2b8; color:white;">📨 Enviado</span>',
+            'read': '<span class="status-badge read" style="background:#8e44ad; color:white;">👁️ Lida</span>'
         };
         return badges[status] || '<span class="status-badge">📨 Enviado</span>';
     }
@@ -461,13 +466,32 @@
         if (item.status === 'lgpd') return 'Bloqueio LGPD';
         if (item.status === 'semwhatsapp') return 'Sem WhatsApp';
         if (item.status === 'enviado') return 'Aguardando resposta';
+        if (item.status === 'read') return 'Mensagem lida';
         return '-';
     }
     
     function processarDadosDistintos(resultado) {
         const mapa = new Map();
         
-        // Adicionar enviados sem resposta (se a API retornar lista_enviados)
+        // Adicionar leituras (READ)
+        if (resultado.lista_read && Array.isArray(resultado.lista_read)) {
+            resultado.lista_read.forEach(item => {
+                const telefone = normalizarTelefone(item.telefone);
+                if (!mapa.has(telefone)) {
+                    mapa.set(telefone, {
+                        nome: item.nome,
+                        telefone: item.telefone,
+                        cargo: item.cargo || '-',
+                        empresa: item.empresa || '-',
+                        status: 'read',
+                        data: item.leitura_em,
+                        detalhes: `Mensagem lida em ${formatarData(item.leitura_em)}`
+                    });
+                }
+            });
+        }
+        
+        // Adicionar enviados sem resposta
         if (resultado.lista_enviados && Array.isArray(resultado.lista_enviados)) {
             resultado.lista_enviados.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone);
@@ -485,7 +509,7 @@
             });
         }
         
-        // Respostas SIM
+        // Respostas SIM (sobrescreve enviado/read)
         if (resultado.lista_sim && Array.isArray(resultado.lista_sim)) {
             resultado.lista_sim.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone);
@@ -501,7 +525,7 @@
             });
         }
         
-        // Respostas NÃO
+        // Respostas NÃO (sobrescreve enviado/read)
         if (resultado.lista_nao && Array.isArray(resultado.lista_nao)) {
             resultado.lista_nao.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone);
