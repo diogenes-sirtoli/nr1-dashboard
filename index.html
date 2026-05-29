@@ -729,3 +729,127 @@
             pagContainer.innerHTML = '';
         } else {
             let pagHtml = `<button onclick="mudarPagina(${paginaAtual - 1})" ${paginaAtual === 1 ? 'disabled' : ''}>◀ Anterior</button>`;
+            for (let i = 1; i <= Math.min(totalPaginas, 5); i++) {
+                pagHtml += `<button onclick="mudarPagina(${i})" class="${paginaAtual === i ? 'active-page' : ''}">${i}</button>`;
+            }
+            if (totalPaginas > 5) pagHtml += `<span>...</span><button onclick="mudarPagina(${totalPaginas})">${totalPaginas}</button>`;
+            pagHtml += `<button onclick="mudarPagina(${paginaAtual + 1})" ${paginaAtual === totalPaginas ? 'disabled' : ''}>Próxima ▶</button>`;
+            pagHtml += `<span class="page-info">Página ${paginaAtual} de ${totalPaginas}</span>`;
+            pagContainer.innerHTML = pagHtml;
+        }
+    }
+    
+    function mudarPagina(novaPagina) {
+        paginaAtual = novaPagina;
+        renderizarEnvios();
+    }
+    
+    function configurarOrdenacao() {
+        const headers = document.querySelectorAll('#enviosTable th.sortable');
+        headers.forEach(header => {
+            header.addEventListener('click', () => {
+                const coluna = header.getAttribute('data-sort');
+                headers.forEach(h => h.classList.remove('asc', 'desc'));
+                if (ordenacao.coluna === coluna) {
+                    ordenacao.ordem = ordenacao.ordem === 'asc' ? 'desc' : 'asc';
+                } else {
+                    ordenacao.coluna = coluna;
+                    ordenacao.ordem = 'asc';
+                }
+                header.classList.add(ordenacao.ordem);
+                renderizarEnvios();
+            });
+        });
+    }
+    
+    async function loadData() {
+        try {
+            console.log('Carregando dados da API...');
+            const response = await fetch(API_URL);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            console.log('Dados recebidos:', data);
+            
+            // Acessa resultado corretamente
+            const resultado = data.resultado || data;
+            
+            // Atualiza data de atualização
+            if (resultado.atualizado_em) {
+                document.getElementById('last-update').innerHTML = `Última atualização: ${new Date(resultado.atualizado_em).toLocaleString('pt-BR')}`;
+            }
+            
+            // Atualiza cards da campanha
+            const campanha = resultado.campanha || {};
+            document.getElementById('totalContatos').innerText = campanha.total || 0;
+            document.getElementById('totalSim').innerText = campanha.respondeu_sim || 0;
+            document.getElementById('totalNao').innerText = campanha.respondeu_nao || 0;
+            document.getElementById('totalSemResposta').innerText = campanha.sem_resposta || 0;
+            document.getElementById('totalEnviados').innerText = campanha.enviados || 0;
+            document.getElementById('totalNaoEnviados').innerText = campanha.nao_enviados || 0;
+            
+            // Gráfico de respostas
+            const ctxRespostas = document.getElementById('respostasChart').getContext('2d');
+            if (charts.respostas) charts.respostas.destroy();
+            charts.respostas = new Chart(ctxRespostas, {
+                type: 'bar',
+                data: {
+                    labels: ['✅ SIM', '❌ NÃO', '📭 Sem resposta'],
+                    datasets: [{
+                        label: 'Quantidade',
+                        data: [campanha.respondeu_sim || 0, campanha.respondeu_nao || 0, campanha.sem_resposta || 0],
+                        backgroundColor: ['#28a745', '#dc3545', '#ffc107'],
+                        borderRadius: 6
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'top' } } }
+            });
+            
+            // Gráfico de tentativas
+            const tentativas = campanha.tentativas || { t1: 0, t2: 0, t3: 0, t4: 0 };
+            const ctxTentativas = document.getElementById('tentativasChart').getContext('2d');
+            if (charts.tentativas) charts.tentativas.destroy();
+            charts.tentativas = new Chart(ctxTentativas, {
+                type: 'pie',
+                data: {
+                    labels: ['1ª tentativa', '2ª tentativa', '3ª tentativa', '4+ tentativas'],
+                    datasets: [{
+                        data: [tentativas.t1 || 0, tentativas.t2 || 0, tentativas.t3 || 0, tentativas.t4 || 0],
+                        backgroundColor: ['#007bff', '#6c757d', '#28a745', '#fd7e14']
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'right' } } }
+            });
+            
+            // Processa dados distintos e atualiza tabela
+            processarDadosDistintos(resultado);
+            renderizarEnvios();
+            configurarOrdenacao();
+            
+            // Tabela de status das mensagens
+            const status = resultado.status_mensagens || {};
+            const tableBody = document.querySelector('#statusTable tbody');
+            tableBody.innerHTML = '';
+            for (const [stat, total] of Object.entries(status)) {
+                const row = tableBody.insertRow();
+                row.insertCell(0).innerText = statusTraducao[stat] || stat;
+                row.insertCell(1).innerText = total;
+            }
+            
+            // Filtro de status
+            document.getElementById('filterStatus').addEventListener('change', function() {
+                filtroStatus = this.value;
+                paginaAtual = 1;
+                renderizarEnvios();
+            });
+            
+        } catch (error) {
+            console.error('Erro ao carregar dados:', error);
+            document.getElementById('last-update').innerHTML = 'Erro ao carregar dados. Verifique a conexão.';
+        }
+    }
+    
+    document.getElementById('refreshBtn').addEventListener('click', () => loadData());
+    loadData();
+</script>
+</body>
+</html>
