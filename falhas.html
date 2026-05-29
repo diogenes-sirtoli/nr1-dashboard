@@ -106,6 +106,28 @@
         .custom-range button { background: #28a745; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; }
         .clear-filter { background: #dc3545 !important; }
         
+        .filter-tentativas {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        .filter-tentativas select {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+        .filter-tentativas label {
+            font-weight: 500;
+            color: #555;
+        }
+        
         .table-wrapper {
             background: white;
             border-radius: 12px;
@@ -136,7 +158,24 @@
         .pill.semwhatsapp { background-color: #6c757d; }
         table { width: 100%; border-collapse: collapse; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
-        th { background-color: #f8f9fa; position: sticky; top: 0; font-weight: 600; }
+        th { 
+            background-color: #f8f9fa; 
+            position: sticky; 
+            top: 0; 
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+        th:hover { background-color: #e9ecef; }
+        th .sort-icon {
+            display: inline-block;
+            margin-left: 5px;
+            font-size: 0.8em;
+            opacity: 0.5;
+        }
+        th.asc .sort-icon { opacity: 1; transform: rotate(180deg); display: inline-block; }
+        th.desc .sort-icon { opacity: 1; }
         .loading { text-align: center; padding: 50px; color: #555; }
         .error-code, .error-message { cursor: pointer; transition: background-color 0.2s; }
         .error-code:hover, .error-message:hover { background-color: #fff3cd; text-decoration: underline; }
@@ -297,8 +336,17 @@
                 <span id="countPillFalhas" class="pill">0</span>
             </div>
             <table id="falhasTable">
-                <thead><tr><th>Nome</th><th>Telefone</th><th>Data/Hora</th><th>Código do Erro</th><th>Mensagem de Erro</th></tr></thead>
-                <tbody><tr><td colspan="5" class="loading">Carregando...</td></tr></tbody>
+                <thead>
+                    <tr>
+                        <th data-sort="nome" class="sortable">Nome <span class="sort-icon">▼</span></th>
+                        <th data-sort="telefone">Telefone</th>
+                        <th data-sort="data">Data/Hora <span class="sort-icon">▼</span></th>
+                        <th data-sort="codigo">Código do Erro <span class="sort-icon">▼</span></th>
+                        <th data-sort="mensagem">Mensagem de Erro</th>
+                    </tr>
+                </thead>
+                <tbody><tr><td colspan="5" class="loading">Carregando...</td></tr>
+                </tbody>
             </table>
             <div id="paginationFalhas" class="pagination"></div>
         </div>
@@ -321,8 +369,17 @@
                 <span id="countPillLgpd" class="pill lgpd">0</span>
             </div>
             <table id="lgpdTable">
-                <thead><tr><th>Nome</th><th>Telefone</th><th>Cargo</th><th>Empresa</th><th>Data do Bloqueio</th></tr></thead>
-                <tbody><tr><td colspan="5" class="loading">Carregando...</td></tr></tbody>
+                <thead>
+                    <tr>
+                        <th data-sort="nome" class="sortable">Nome <span class="sort-icon">▼</span></th>
+                        <th data-sort="telefone">Telefone</th>
+                        <th data-sort="cargo">Cargo</th>
+                        <th data-sort="empresa">Empresa</th>
+                        <th data-sort="data">Data do Bloqueio <span class="sort-icon">▼</span></th>
+                    </tr>
+                </thead>
+                <tbody><tr><td colspan="5" class="loading">Carregando...</td></tr>
+                </tbody>
             </table>
             <div id="paginationLgpd" class="pagination"></div>
         </div>
@@ -338,6 +395,19 @@
                     <button onclick="limparBuscaRetry()" class="clear-filter" style="background:#6c757d">✖ Limpar</button>
                 </div>
             </div>
+            <div class="filter-tentativas">
+                <label>📊 Filtrar por tentativas:</label>
+                <select id="filterEnviosCount">
+                    <option value="all">Todas tentativas</option>
+                    <option value="4">Apenas 4 tentativas</option>
+                    <option value="less4">Menos de 4 tentativas</option>
+                    <option value="1">1 tentativa</option>
+                    <option value="2">2 tentativas</option>
+                    <option value="3">3 tentativas</option>
+                </select>
+                <button onclick="aplicarFiltroTentativas()" style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Aplicar</button>
+                <button onclick="limparFiltroTentativas()" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Limpar filtro</button>
+            </div>
         </div>
         <div class="table-wrapper">
             <div class="table-header">
@@ -345,8 +415,18 @@
                 <span id="countPillRetry" class="pill retry">0</span>
             </div>
             <table id="retryTable">
-                <thead><tr><th>Nome</th><th>Telefone</th><th>Cargo</th><th>Empresa</th><th>Tentativas</th><th>Data do Bloqueio</th></tr></thead>
-                <tbody><tr><td colspan="6" class="loading">Carregando...</td></tr></tbody>
+                <thead>
+                    <tr>
+                        <th data-sort="nome" class="sortable">Nome <span class="sort-icon">▼</span></th>
+                        <th data-sort="telefone">Telefone</th>
+                        <th data-sort="cargo">Cargo</th>
+                        <th data-sort="empresa">Empresa</th>
+                        <th data-sort="tentativas">Tentativas <span class="sort-icon">▼</span></th>
+                        <th data-sort="data">Data do Bloqueio <span class="sort-icon">▼</span></th>
+                    </tr>
+                </thead>
+                <tbody><tr><td colspan="6" class="loading">Carregando...</td></tr>
+                </tbody>
             </table>
             <div id="paginationRetry" class="pagination"></div>
         </div>
@@ -369,13 +449,23 @@
                 <span id="countPillSemWhatsapp" class="pill semwhatsapp">0</span>
             </div>
             <table id="semWhatsappTable">
-                <thead><tr><th>Nome</th><th>Telefone</th><th>Cargo</th><th>Empresa</th><th>Status</th><th>Data da Validação</th></tr></thead>
-                <tbody><tr><td colspan="6" class="loading">Carregando...</td></tr></tbody>
+                <thead>
+                    <tr>
+                        <th data-sort="nome" class="sortable">Nome <span class="sort-icon">▼</span></th>
+                        <th data-sort="telefone">Telefone</th>
+                        <th data-sort="cargo">Cargo</th>
+                        <th data-sort="empresa">Empresa</th>
+                        <th data-sort="status">Status</th>
+                        <th data-sort="data">Data da Validação <span class="sort-icon">▼</span></th>
+                    </tr>
+                </thead>
+                <tbody><tr><td colspan="6" class="loading">Carregando...</td></tr>
+                </tbody>
             </table>
             <div id="paginationSemWhatsapp" class="pagination"></div>
         </div>
     </div>
-    <footer>Clique no código ou mensagem de erro para ver explicação detalhada | Bloqueios baseados na coluna bloqueio_envio da tabela nr1_campanha</footer>
+    <footer>Clique no código ou mensagem de erro para ver explicação detalhada | Clique nos títulos das colunas para ordenar | Bloqueios baseados na coluna bloqueio_envio da tabela nr1_campanha</footer>
 </div>
 
 <!-- Modal -->
@@ -398,7 +488,20 @@
 
     let paginaAtual = { falhas: 1, lgpd: 1, retry: 1, semwhatsapp: 1 };
     let itensPorPagina = 20;
-    let filtros = { falhas: { start: null, end: null, search: '' }, lgpd: { search: '' }, retry: { search: '' }, semwhatsapp: { search: '' } };
+    
+    let ordenacao = {
+        falhas: { coluna: 'data', ordem: 'desc' },
+        lgpd: { coluna: 'nome', ordem: 'asc' },
+        retry: { coluna: 'nome', ordem: 'asc' },
+        semwhatsapp: { coluna: 'nome', ordem: 'asc' }
+    };
+    
+    let filtros = { 
+        falhas: { start: null, end: null, search: '' }, 
+        lgpd: { search: '' }, 
+        retry: { search: '', enviosCount: 'all' }, 
+        semwhatsapp: { search: '' } 
+    };
 
     const explicacoesErros = {
         "131049": { titulo: "Código 131049 - Limite de marketing atingido", explicacao: "<p><strong>Esta mensagem significa:</strong><br>O destinatário recebeu muitas mensagens de <strong>marketing</strong> nos últimos dias e o WhatsApp bloqueou temporariamente o envio.</p><p><strong>O que fazer:</strong><br>• Não reenvie imediatamente – espere pelo menos 24 horas.<br>• Considere usar templates de utilidade.</p>" },
@@ -430,10 +533,15 @@
         return numeros;
     }
 
-    function formatarPrimeiroNome(nomeCompleto) {
+    function formatarNomeCompleto(nomeCompleto) {
         if (!nomeCompleto || nomeCompleto === 'Não identificado') return 'Não identificado';
-        let primeiroNome = String(nomeCompleto).trim().split(' ')[0];
-        return primeiroNome.charAt(0).toUpperCase() + primeiroNome.slice(1).toLowerCase();
+        return String(nomeCompleto).trim();
+    }
+
+    function truncarTexto(texto, limite = 70) {
+        if (!texto) return '-';
+        if (texto.length <= limite) return texto;
+        return texto.substring(0, limite) + '...';
     }
 
     function formatarData(dataISO) {
@@ -448,6 +556,87 @@
     function escapeHtml(value) {
         if (value === null || value === undefined) return '';
         return String(value).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]);
+    }
+
+    function ordenarDados(dados, coluna, ordem, tipo) {
+        return [...dados].sort((a, b) => {
+            let valA, valB;
+            
+            switch(coluna) {
+                case 'nome':
+                    valA = (a.nome || '').toLowerCase();
+                    valB = (b.nome || '').toLowerCase();
+                    break;
+                case 'telefone':
+                    valA = normalizarTelefone(a.telefone) || '';
+                    valB = normalizarTelefone(b.telefone) || '';
+                    break;
+                case 'cargo':
+                    valA = (a.cargo || '').toLowerCase();
+                    valB = (b.cargo || '').toLowerCase();
+                    break;
+                case 'empresa':
+                    valA = (a.empresa || '').toLowerCase();
+                    valB = (b.empresa || '').toLowerCase();
+                    break;
+                case 'data':
+                    valA = a.timestamp || a.bloqueio_em || a.validado_em || '';
+                    valB = b.timestamp || b.bloqueio_em || b.validado_em || '';
+                    break;
+                case 'codigo':
+                    valA = String(a.codigo_erro || '');
+                    valB = String(b.codigo_erro || '');
+                    break;
+                case 'mensagem':
+                    valA = (a.mensagem_erro || '').toLowerCase();
+                    valB = (b.mensagem_erro || '').toLowerCase();
+                    break;
+                case 'tentativas':
+                    valA = a.envios_count || 0;
+                    valB = b.envios_count || 0;
+                    break;
+                case 'status':
+                    valA = (a.status_whatsapp || '').toLowerCase();
+                    valB = (b.status_whatsapp || '').toLowerCase();
+                    break;
+                default:
+                    return 0;
+            }
+            
+            if (valA < valB) return ordem === 'asc' ? -1 : 1;
+            if (valA > valB) return ordem === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }
+
+    function configurarOrdenacao(tabelaId, tipo) {
+        const table = document.getElementById(tabelaId);
+        if (!table) return;
+        const headers = table.querySelectorAll('th.sortable');
+        
+        headers.forEach(header => {
+            header.addEventListener('click', () => {
+                const coluna = header.getAttribute('data-sort');
+                const atual = ordenacao[tipo];
+                
+                headers.forEach(h => h.classList.remove('asc', 'desc'));
+                
+                if (atual.coluna === coluna) {
+                    atual.ordem = atual.ordem === 'asc' ? 'desc' : 'asc';
+                } else {
+                    atual.coluna = coluna;
+                    atual.ordem = 'asc';
+                }
+                
+                header.classList.add(atual.ordem);
+                paginaAtual[tipo] = 1;
+                
+                if (tipo === 'falhas') renderizarFalhas();
+                else if (tipo === 'lgpd') renderizarLgpd();
+                else if (tipo === 'retry') renderizarRetry();
+                else if (tipo === 'semwhatsapp') renderizarSemWhatsapp();
+            });
+        });
     }
 
     async function carregarDados() {
@@ -477,25 +666,53 @@
         if (filtros.falhas.start) dados = dados.filter(item => item.timestamp && new Date(item.timestamp) >= filtros.falhas.start);
         if (filtros.falhas.end) dados = dados.filter(item => item.timestamp && new Date(item.timestamp) <= filtros.falhas.end);
         if (filtros.falhas.search) dados = dados.filter(item => String(item.codigo_erro || '').toLowerCase().includes(filtros.falhas.search) || String(item.mensagem_erro || '').toLowerCase().includes(filtros.falhas.search));
-        return dados;
+        return ordenarDados(dados, ordenacao.falhas.coluna, ordenacao.falhas.ordem, 'falhas');
     }
 
     function getDadosFiltradosLgpd() {
         let dados = [...dadosLgpd];
         if (filtros.lgpd.search) dados = dados.filter(item => String(item.nome || '').toLowerCase().includes(filtros.lgpd.search) || String(item.telefone || '').includes(filtros.lgpd.search));
-        return dados;
+        return ordenarDados(dados, ordenacao.lgpd.coluna, ordenacao.lgpd.ordem, 'lgpd');
     }
 
     function getDadosFiltradosRetry() {
         let dados = [...dadosRetry];
         if (filtros.retry.search) dados = dados.filter(item => String(item.nome || '').toLowerCase().includes(filtros.retry.search) || String(item.telefone || '').includes(filtros.retry.search));
-        return dados;
+        
+        if (filtros.retry.enviosCount === '4') {
+            dados = dados.filter(item => item.envios_count === 4);
+        } else if (filtros.retry.enviosCount === 'less4') {
+            dados = dados.filter(item => item.envios_count < 4);
+        } else if (filtros.retry.enviosCount === '1') {
+            dados = dados.filter(item => item.envios_count === 1);
+        } else if (filtros.retry.enviosCount === '2') {
+            dados = dados.filter(item => item.envios_count === 2);
+        } else if (filtros.retry.enviosCount === '3') {
+            dados = dados.filter(item => item.envios_count === 3);
+        }
+        
+        return ordenarDados(dados, ordenacao.retry.coluna, ordenacao.retry.ordem, 'retry');
     }
 
     function getDadosFiltradosSemWhatsapp() {
         let dados = [...dadosSemWhatsapp];
         if (filtros.semwhatsapp.search) dados = dados.filter(item => String(item.nome || '').toLowerCase().includes(filtros.semwhatsapp.search) || String(item.telefone || '').includes(filtros.semwhatsapp.search));
-        return dados;
+        return ordenarDados(dados, ordenacao.semwhatsapp.coluna, ordenacao.semwhatsapp.ordem, 'semwhatsapp');
+    }
+
+    function aplicarFiltroTentativas() {
+        const select = document.getElementById('filterEnviosCount');
+        filtros.retry.enviosCount = select.value;
+        paginaAtual.retry = 1;
+        renderizarRetry();
+    }
+
+    function limparFiltroTentativas() {
+        const select = document.getElementById('filterEnviosCount');
+        select.value = 'all';
+        filtros.retry.enviosCount = 'all';
+        paginaAtual.retry = 1;
+        renderizarRetry();
     }
 
     function renderizarFalhas() {
@@ -513,14 +730,21 @@
         } else {
             let html = '';
             for (let item of paginaDados) {
-                const nomeExibido = formatarPrimeiroNome(item.nome);
+                const nomeExibido = formatarNomeCompleto(item.nome);
                 let telefoneNormalizado = normalizarTelefone(item.telefone);
-                const linkWhatsApp = telefoneNormalizado ? `https://wa.me/${telefoneNormalizado}?text=${encodeURIComponent(`Oi ${nomeExibido !== 'Não identificado' ? nomeExibido : 'cliente'}, tudo bem?`)}` : '#';
+                const linkWhatsApp = telefoneNormalizado ? `https://wa.me/${telefoneNormalizado}?text=${encodeURIComponent(`Oi ${nomeExibido !== 'Não identificado' ? nomeExibido.split(' ')[0] : 'cliente'}, tudo bem?`)}` : '#';
                 const telefoneHtml = telefoneNormalizado ? `<a href="${linkWhatsApp}" target="_blank" class="tel-button">${escapeHtml(telefoneNormalizado)}</a>` : escapeHtml(item.telefone) || '-';
                 let dataHora = item.timestamp ? new Date(item.timestamp).toLocaleString('pt-BR') : '-';
                 const codigoErro = escapeHtml(item.codigo_erro);
-                const mensagemErro = escapeHtml(item.mensagem_erro);
-                html += `<tr><td>${escapeHtml(nomeExibido)}</td><td>${telefoneHtml}</td><td>${dataHora}</td><td class="error-code" onclick="mostrarModal('${codigoErro}', '${mensagemErro.replace(/'/g, "\\'")}')">${codigoErro}</td><td class="error-message" onclick="mostrarModal('${codigoErro}', '${mensagemErro.replace(/'/g, "\\'")}')">${mensagemErro}</td></tr>`;
+                const mensagemErroOriginal = item.mensagem_erro || '';
+                const mensagemErroTruncada = truncarTexto(mensagemErroOriginal, 70);
+                html += `<tr>
+                    <td style="max-width: 200px; word-break: break-word;">${escapeHtml(nomeExibido)}</td>
+                    <td>${telefoneHtml}</td>
+                    <td>${dataHora}</td>
+                    <td class="error-code" onclick="mostrarModal('${codigoErro}', '${escapeHtml(mensagemErroOriginal).replace(/'/g, "\\'")}')">${codigoErro}</td>
+                    <td class="error-message" onclick="mostrarModal('${codigoErro}', '${escapeHtml(mensagemErroOriginal).replace(/'/g, "\\'")}')" title="${escapeHtml(mensagemErroOriginal)}">${escapeHtml(mensagemErroTruncada)}</td>
+                </tr>`;
             }
             tbody.innerHTML = html;
         }
@@ -544,7 +768,13 @@
             for (let item of paginaDados) {
                 const telefoneNormalizado = normalizarTelefone(item.telefone);
                 const telefoneHtml = telefoneNormalizado ? `<a href="https://wa.me/${telefoneNormalizado}" target="_blank" class="tel-button">${escapeHtml(telefoneNormalizado)}</a>` : escapeHtml(item.telefone) || '-';
-                html += `<tr><td>${escapeHtml(item.nome || 'Não identificado')}</td><td>${telefoneHtml}</td><td>${escapeHtml(item.cargo || '-')}</td><td>${escapeHtml(item.empresa || '-')}</td><td>${formatarData(item.bloqueio_em)}</td></tr>`;
+                html += `<tr>
+                    <td style="max-width: 200px; word-break: break-word;">${escapeHtml(item.nome || 'Não identificado')}</td>
+                    <td>${telefoneHtml}</td>
+                    <td>${escapeHtml(item.cargo || '-')}</td>
+                    <td>${escapeHtml(item.empresa || '-')}</td>
+                    <td>${formatarData(item.bloqueio_em)}</td>
+                </tr>`;
             }
             tbody.innerHTML = html;
         }
@@ -562,13 +792,20 @@
         const tbody = document.querySelector('#retryTable tbody');
         
         if (paginaDados.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6">Nenhuma retentativa bloqueada encontrada.</td></tr>';
+            tbody.innerHTML = '</table><td colspan="6">Nenhuma retentativa bloqueada encontrada.</td></tr>';
         } else {
             let html = '';
             for (let item of paginaDados) {
                 const telefoneNormalizado = normalizarTelefone(item.telefone);
                 const telefoneHtml = telefoneNormalizado ? `<a href="https://wa.me/${telefoneNormalizado}" target="_blank" class="tel-button">${escapeHtml(telefoneNormalizado)}</a>` : escapeHtml(item.telefone) || '-';
-                html += `<tr><td>${escapeHtml(item.nome || 'Não identificado')}</td><td>${telefoneHtml}</td><td>${escapeHtml(item.cargo || '-')}</td><td>${escapeHtml(item.empresa || '-')}</td><td><span class="pill" style="background:#17a2b8;">${item.envios_count || '3+'}</span></td><td>${formatarData(item.bloqueio_em)}</td></tr>`;
+                html += `<tr>
+                    <td style="max-width: 200px; word-break: break-word;">${escapeHtml(item.nome || 'Não identificado')}</td>
+                    <td>${telefoneHtml}</td>
+                    <td>${escapeHtml(item.cargo || '-')}</td>
+                    <td>${escapeHtml(item.empresa || '-')}</td>
+                    <td><span class="pill" style="background:#17a2b8;">${item.envios_count || '3+'}</span></td>
+                    <td>${formatarData(item.bloqueio_em)}</td>
+                </tr>`;
             }
             tbody.innerHTML = html;
         }
@@ -586,7 +823,7 @@
         const tbody = document.querySelector('#semWhatsappTable tbody');
         
         if (paginaDados.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6">Nenhum contato sem WhatsApp encontrado.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6">Nenhum contato sem WhatsApp encontrado. </td></tr>';
         } else {
             let html = '';
             for (let item of paginaDados) {
@@ -595,7 +832,14 @@
                 const statusWhatsapp = item.status_whatsapp || 'NAO_WHATSAPP';
                 const statusText = statusWhatsapp === 'INVALIDO' ? 'Número Inválido' : 'Não possui WhatsApp';
                 const statusClass = statusWhatsapp === 'INVALIDO' ? 'invalido' : 'nao-whatsapp';
-                html += `<tr><td>${escapeHtml(item.nome || 'Não identificado')}</td><td>${telefoneHtml}</td><td>${escapeHtml(item.cargo || '-')}</td><td>${escapeHtml(item.empresa || '-')}</td><td><span class="status-badge ${statusClass}">📵 ${statusText}</span></td><td>${formatarData(item.validado_em)}</td></tr>`;
+                html += `<tr>
+                    <td style="max-width: 200px; word-break: break-word;">${escapeHtml(item.nome || 'Não identificado')}</td>
+                    <td>${telefoneHtml}</td>
+                    <td>${escapeHtml(item.cargo || '-')}</td>
+                    <td>${escapeHtml(item.empresa || '-')}</td>
+                    <td><span class="status-badge ${statusClass}">📵 ${statusText}</span></td>
+                    <td>${formatarData(item.validado_em)}</td>
+                </tr>`;
             }
             tbody.innerHTML = html;
         }
@@ -614,16 +858,30 @@
         container.innerHTML = html;
     }
 
-    function mudarPagina(tipo, novaPagina) { paginaAtual[tipo] = novaPagina; if (tipo === 'falhas') renderizarFalhas(); else if (tipo === 'lgpd') renderizarLgpd(); else if (tipo === 'retry') renderizarRetry(); else if (tipo === 'semwhatsapp') renderizarSemWhatsapp(); }
+    function mudarPagina(tipo, novaPagina) { 
+        paginaAtual[tipo] = novaPagina; 
+        if (tipo === 'falhas') renderizarFalhas(); 
+        else if (tipo === 'lgpd') renderizarLgpd(); 
+        else if (tipo === 'retry') renderizarRetry(); 
+        else if (tipo === 'semwhatsapp') renderizarSemWhatsapp(); 
+    }
 
     function setQuickFilter(tipo, periodo) {
-        let start = null, end = new Date(); end.setHours(23,59,59,999);
+        let start = null, end = new Date(); 
+        end.setHours(23,59,59,999);
         const now = new Date();
         if (periodo === '24h') { start = new Date(now); start.setDate(now.getDate()-1); start.setHours(0,0,0,0); }
         else if (periodo === '5d') { start = new Date(now); start.setDate(now.getDate()-5); start.setHours(0,0,0,0); }
         else if (periodo === '7d') { start = new Date(now); start.setDate(now.getDate()-7); start.setHours(0,0,0,0); }
         else if (periodo === '30d') { start = new Date(now); start.setDate(now.getDate()-30); start.setHours(0,0,0,0); }
-        if (tipo === 'falhas') { filtros.falhas.start = start; filtros.falhas.end = end; if(start) document.getElementById('startDateFalhas').value = start.toISOString().split('T')[0]; document.getElementById('endDateFalhas').value = end.toISOString().split('T')[0]; paginaAtual.falhas = 1; renderizarFalhas(); }
+        if (tipo === 'falhas') { 
+            filtros.falhas.start = start; 
+            filtros.falhas.end = end; 
+            if(start) document.getElementById('startDateFalhas').value = start.toISOString().split('T')[0]; 
+            document.getElementById('endDateFalhas').value = end.toISOString().split('T')[0]; 
+            paginaAtual.falhas = 1; 
+            renderizarFalhas(); 
+        }
     }
 
     function applyCustomFilter(tipo) {
@@ -632,7 +890,8 @@
             let end = document.getElementById('endDateFalhas').value;
             filtros.falhas.start = start ? new Date(start + 'T00:00:00') : null;
             filtros.falhas.end = end ? new Date(end + 'T23:59:59') : null;
-            paginaAtual.falhas = 1; renderizarFalhas();
+            paginaAtual.falhas = 1; 
+            renderizarFalhas();
         }
     }
 
@@ -640,8 +899,10 @@
         if (tipo === 'falhas') {
             document.getElementById('startDateFalhas').value = '';
             document.getElementById('endDateFalhas').value = '';
-            filtros.falhas.start = null; filtros.falhas.end = null;
-            paginaAtual.falhas = 1; renderizarFalhas();
+            filtros.falhas.start = null; 
+            filtros.falhas.end = null;
+            paginaAtual.falhas = 1; 
+            renderizarFalhas();
         }
     }
 
@@ -654,9 +915,18 @@
     function filtrarSemWhatsapp() { filtros.semwhatsapp.search = document.getElementById('searchSemWhatsapp').value.toLowerCase(); paginaAtual.semwhatsapp = 1; renderizarSemWhatsapp(); }
     function limparBuscaSemWhatsapp() { document.getElementById('searchSemWhatsapp').value = ''; filtros.semwhatsapp.search = ''; paginaAtual.semwhatsapp = 1; renderizarSemWhatsapp(); }
 
-    function atualizarTodasTabelas() { renderizarFalhas(); renderizarLgpd(); renderizarRetry(); renderizarSemWhatsapp(); }
+    function atualizarTodasTabelas() { 
+        renderizarFalhas(); 
+        renderizarLgpd(); 
+        renderizarRetry(); 
+        renderizarSemWhatsapp(); 
+        
+        configurarOrdenacao('falhasTable', 'falhas');
+        configurarOrdenacao('lgpdTable', 'lgpd');
+        configurarOrdenacao('retryTable', 'retry');
+        configurarOrdenacao('semWhatsappTable', 'semwhatsapp');
+    }
 
-    // Tabs
     document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => {
         const tabId = btn.getAttribute('data-tab');
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -665,7 +935,6 @@
         document.getElementById(`tab-${tabId}`).classList.add('active');
     }));
 
-    // Modal
     const modal = document.getElementById('errorModal');
     const closeSpan = document.querySelector('.close-modal');
     const closeBtn = document.getElementById('closeModalBtn');
