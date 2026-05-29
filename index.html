@@ -440,17 +440,18 @@
         });
     }
     
-    function getStatusBadge(status) {
-        const badges = {
-            'sim': '<span class="status-badge sim">✅ SIM</span>',
-            'nao': '<span class="status-badge nao">❌ NÃO</span>',
-            'falha': '<span class="status-badge falha">⚠️ Falha</span>',
-            'retry': '<span class="status-badge retry">🔄 Retentativa</span>',
-            'lgpd': '<span class="status-badge lgpd">🔒 LGPD</span>',
-            'semwhatsapp': '<span class="status-badge semwhatsapp">📵 Sem WhatsApp</span>'
-        };
-        return badges[status] || '<span class="status-badge">📨 Enviado</span>';
-    }
+function getStatusBadge(status) {
+    const badges = {
+        'sim': '<span class="status-badge sim">✅ SIM</span>',
+        'nao': '<span class="status-badge nao">❌ NÃO</span>',
+        'falha': '<span class="status-badge falha">⚠️ Falha</span>',
+        'retry': '<span class="status-badge retry">🔄 Retentativa</span>',
+        'lgpd': '<span class="status-badge lgpd">🔒 LGPD</span>',
+        'semwhatsapp': '<span class="status-badge semwhatsapp">📵 Sem WhatsApp</span>',
+        'enviado': '<span class="status-badge" style="background:#17a2b8; color:white;">📨 Aguardando resposta</span>'
+    };
+    return badges[status] || '<span class="status-badge">📨 Enviado</span>';
+}
     
     function processarDadosDistintos(resultado) {
     const mapa = new Map();
