@@ -376,8 +376,7 @@
     <div class="status-table">
         <h2>📲 Status das Mensagens (Agregado)</h2>
         <table id="statusTable">
-            <thead><tr><th>Status</th><th>Quantidade</th></tr>
-            </thead>
+            <thead><tr><th>Status</th><th>Quantidade</th></tr></thead>
             <tbody><tr><td colspan="2" class="loading">Carregando...</td></tr>
             </tbody>
         </table>
@@ -471,7 +470,7 @@
             'retry': '<span class="status-badge retry">🔄 Bloqueio (RETRY)</span>',
             'lgpd': '<span class="status-badge lgpd">🔒 Bloqueio LGPD</span>',
             'semwhatsapp': '<span class="status-badge semwhatsapp">📵 Sem WhatsApp</span>',
-            'enviado': '<span class="status-badge enviado" style="background:#17a2b8; color:white;">📨 Enviado</span>',
+            'enviado': '<span class="status-badge enviado" style="background:#17a2b8; color:white;">📨 Aguardando resposta</span>',
             'read': '<span class="status-badge read" style="background:#8e44ad; color:white;">👁️ Lida</span>'
         };
         return badges[status] || '<span class="status-badge">📨 Enviado</span>';
@@ -484,6 +483,8 @@
         if (item.status === 'semwhatsapp') return 'Sem WhatsApp';
         if (item.status === 'enviado') return 'Aguardando resposta';
         if (item.status === 'read') return 'Mensagem lida';
+        if (item.status === 'sim') return 'Respondeu SIM';
+        if (item.status === 'nao') return 'Respondeu NÃO';
         return '-';
     }
     
@@ -502,11 +503,11 @@
     function processarDadosDistintos(resultado) {
         const mapa = new Map();
         
-        // Adicionar leituras (READ)
+        // Adicionar leituras (READ) - PRIORIDADE MAIS BAIXA
         if (resultado.lista_read && Array.isArray(resultado.lista_read)) {
             resultado.lista_read.forEach(item => {
-                const telefone = normalizarTelefone(item.telefone);
-                const key = telefone || item.telefone;
+                const telefone = normalizarTelefone(item.telefone) || item.telefone;
+                const key = telefone;
                 if (!mapa.has(key)) {
                     mapa.set(key, {
                         nome: item.nome,
@@ -515,25 +516,29 @@
                         empresa: item.empresa || '-',
                         status: 'read',
                         data: item.leitura_em,
-                        detalhes: `Mensagem lida em ${formatarData(item.leitura_em)}`
+                        detalhes: `Mensagem lida em ${formatarData(item.leitura_em)}`,
+                        prioridade: 1
                     });
                 } else {
-                    // Se já existe, atualiza apenas se a data for mais recente
+                    // Verifica se a leitura é mais recente
                     const existing = mapa.get(key);
                     if (item.leitura_em && (!existing.data || new Date(item.leitura_em) > new Date(existing.data))) {
-                        existing.status = 'read';
-                        existing.data = item.leitura_em;
-                        existing.detalhes = `Mensagem lida em ${formatarData(item.leitura_em)}`;
+                        if (existing.prioridade < 3) { // Só atualiza se não for SIM/NAO
+                            existing.status = 'read';
+                            existing.data = item.leitura_em;
+                            existing.detalhes = `Mensagem lida em ${formatarData(item.leitura_em)}`;
+                            existing.prioridade = 1;
+                        }
                     }
                 }
             });
         }
         
-        // Adicionar enviados sem resposta
+        // Adicionar enviados sem resposta - PRIORIDADE MÉDIA
         if (resultado.lista_enviados && Array.isArray(resultado.lista_enviados)) {
             resultado.lista_enviados.forEach(item => {
-                const telefone = normalizarTelefone(item.telefone);
-                const key = telefone || item.telefone;
+                const telefone = normalizarTelefone(item.telefone) || item.telefone;
+                const key = telefone;
                 if (!mapa.has(key)) {
                     mapa.set(key, {
                         nome: item.nome,
@@ -542,51 +547,78 @@
                         empresa: item.empresa || '-',
                         status: 'enviado',
                         data: item.enviado_em,
-                        detalhes: `Mensagem enviada - Aguardando resposta`
+                        detalhes: `Mensagem enviada - Aguardando resposta`,
+                        prioridade: 2
                     });
                 }
             });
         }
         
-        // Respostas SIM
-        if (resultado.lista_sim && Array.isArray(resultado.lista_sim)) {
-            resultado.lista_sim.forEach(item => {
-                const telefone = normalizarTelefone(item.telefone);
-                const key = telefone || item.telefone;
-                mapa.set(key, {
-                    nome: item.nome,
-                    telefone: item.telefone,
-                    cargo: item.cargo || '-',
-                    empresa: item.empresa || '-',
-                    status: 'sim',
-                    data: item.respondido_em,
-                    detalhes: `Respondeu SIM - Template: ${item.template_enviado || 'N/A'}`
-                });
+        // RETRY - PRIORIDADE MÉDIA
+        if (resultado.lista_retry && Array.isArray(resultado.lista_retry)) {
+            resultado.lista_retry.forEach(item => {
+                const telefone = normalizarTelefone(item.telefone) || item.telefone;
+                const key = telefone;
+                if (!mapa.has(key)) {
+                    mapa.set(key, {
+                        nome: item.nome,
+                        telefone: item.telefone,
+                        cargo: item.cargo || '-',
+                        empresa: item.empresa || '-',
+                        status: 'retry',
+                        data: item.bloqueio_em,
+                        detalhes: `${item.envios_count || 'Múltiplas'} tentativa(s) sem sucesso`,
+                        prioridade: 2
+                    });
+                }
             });
         }
         
-        // Respostas NÃO
-        if (resultado.lista_nao && Array.isArray(resultado.lista_nao)) {
-            resultado.lista_nao.forEach(item => {
-                const telefone = normalizarTelefone(item.telefone);
-                const key = telefone || item.telefone;
-                mapa.set(key, {
-                    nome: item.nome,
-                    telefone: item.telefone,
-                    cargo: item.cargo || '-',
-                    empresa: item.empresa || '-',
-                    status: 'nao',
-                    data: item.respondido_em,
-                    detalhes: `Respondeu NÃO - Template: ${item.template_enviado || 'N/A'}`
-                });
+        // LGPD - PRIORIDADE MÉDIA
+        if (resultado.lista_lgpd && Array.isArray(resultado.lista_lgpd)) {
+            resultado.lista_lgpd.forEach(item => {
+                const telefone = normalizarTelefone(item.telefone) || item.telefone;
+                const key = telefone;
+                if (!mapa.has(key)) {
+                    mapa.set(key, {
+                        nome: item.nome,
+                        telefone: item.telefone,
+                        cargo: item.cargo || '-',
+                        empresa: item.empresa || '-',
+                        status: 'lgpd',
+                        data: item.bloqueio_em,
+                        detalhes: 'Bloqueado por solicitação LGPD',
+                        prioridade: 2
+                    });
+                }
             });
         }
         
-        // Falhas
+        // Sem WhatsApp - PRIORIDADE MÉDIA
+        if (resultado.lista_sem_whatsapp && Array.isArray(resultado.lista_sem_whatsapp)) {
+            resultado.lista_sem_whatsapp.forEach(item => {
+                const telefone = normalizarTelefone(item.telefone) || item.telefone;
+                const key = telefone;
+                if (!mapa.has(key)) {
+                    mapa.set(key, {
+                        nome: item.nome,
+                        telefone: item.telefone,
+                        cargo: item.cargo || '-',
+                        empresa: item.empresa || '-',
+                        status: 'semwhatsapp',
+                        data: item.validado_em,
+                        detalhes: 'Número não possui WhatsApp válido',
+                        prioridade: 2
+                    });
+                }
+            });
+        }
+        
+        // Falhas (failed) - PRIORIDADE MÉDIA
         if (resultado.lista_falhas && Array.isArray(resultado.lista_falhas)) {
             resultado.lista_falhas.forEach(item => {
-                const telefone = normalizarTelefone(item.telefone);
-                const key = telefone || item.telefone;
+                const telefone = normalizarTelefone(item.telefone) || item.telefone;
+                const key = telefone;
                 if (!mapa.has(key)) {
                     mapa.set(key, {
                         nome: item.nome,
@@ -597,71 +629,55 @@
                         data: item.timestamp,
                         codigo_erro: item.codigo_erro,
                         mensagem_erro: item.mensagem_erro,
-                        detalhes: `<span class="error-code" onclick="mostrarModal('${item.codigo_erro}', '${escapeHtml(item.mensagem_erro || '').replace(/'/g, "\\'")}')">⚠️ Código ${item.codigo_erro}</span>`
+                        detalhes: `<span class="error-code" onclick="mostrarModal('${item.codigo_erro}', '${escapeHtml(item.mensagem_erro || '').replace(/'/g, "\\'")}')">⚠️ Código ${item.codigo_erro}</span>`,
+                        prioridade: 2
                     });
                 }
             });
         }
         
-        // RETRY
-        if (resultado.lista_retry && Array.isArray(resultado.lista_retry)) {
-            resultado.lista_retry.forEach(item => {
-                const telefone = normalizarTelefone(item.telefone);
-                const key = telefone || item.telefone;
-                if (!mapa.has(key)) {
-                    mapa.set(key, {
-                        nome: item.nome,
-                        telefone: item.telefone,
-                        cargo: item.cargo || '-',
-                        empresa: item.empresa || '-',
-                        status: 'retry',
-                        data: item.bloqueio_em,
-                        detalhes: `${item.envios_count || 'Múltiplas'} tentativa(s) sem sucesso`
-                    });
-                }
+        // Respostas NÃO - PRIORIDADE ALTA (sobrescreve)
+        if (resultado.lista_nao && Array.isArray(resultado.lista_nao)) {
+            resultado.lista_nao.forEach(item => {
+                const telefone = normalizarTelefone(item.telefone) || item.telefone;
+                const key = telefone;
+                mapa.set(key, {
+                    nome: item.nome,
+                    telefone: item.telefone,
+                    cargo: item.cargo || '-',
+                    empresa: item.empresa || '-',
+                    status: 'nao',
+                    data: item.respondido_em,
+                    detalhes: `Respondeu NÃO - Template: ${item.template_enviado || 'N/A'}`,
+                    prioridade: 3
+                });
             });
         }
         
-        // LGPD
-        if (resultado.lista_lgpd && Array.isArray(resultado.lista_lgpd)) {
-            resultado.lista_lgpd.forEach(item => {
-                const telefone = normalizarTelefone(item.telefone);
-                const key = telefone || item.telefone;
-                if (!mapa.has(key)) {
-                    mapa.set(key, {
-                        nome: item.nome,
-                        telefone: item.telefone,
-                        cargo: item.cargo || '-',
-                        empresa: item.empresa || '-',
-                        status: 'lgpd',
-                        data: item.bloqueio_em,
-                        detalhes: 'Bloqueado por solicitação LGPD'
-                    });
-                }
-            });
-        }
-        
-        // Sem WhatsApp
-        if (resultado.lista_sem_whatsapp && Array.isArray(resultado.lista_sem_whatsapp)) {
-            resultado.lista_sem_whatsapp.forEach(item => {
-                const telefone = normalizarTelefone(item.telefone);
-                const key = telefone || item.telefone;
-                if (!mapa.has(key)) {
-                    mapa.set(key, {
-                        nome: item.nome,
-                        telefone: item.telefone,
-                        cargo: item.cargo || '-',
-                        empresa: item.empresa || '-',
-                        status: 'semwhatsapp',
-                        data: item.validado_em,
-                        detalhes: 'Número não possui WhatsApp válido'
-                    });
-                }
+        // Respostas SIM - PRIORIDADE MAIS ALTA (sobrescreve todos)
+        if (resultado.lista_sim && Array.isArray(resultado.lista_sim)) {
+            resultado.lista_sim.forEach(item => {
+                const telefone = normalizarTelefone(item.telefone) || item.telefone;
+                const key = telefone;
+                mapa.set(key, {
+                    nome: item.nome,
+                    telefone: item.telefone,
+                    cargo: item.cargo || '-',
+                    empresa: item.empresa || '-',
+                    status: 'sim',
+                    data: item.respondido_em,
+                    detalhes: `Respondeu SIM - Template: ${item.template_enviado || 'N/A'}`,
+                    prioridade: 4
+                });
             });
         }
         
         enviosDistintos = Array.from(mapa.values());
         console.log('Total de contatos distintos:', enviosDistintos.length);
+        console.log('Status counts:', enviosDistintos.reduce((acc, item) => {
+            acc[item.status] = (acc[item.status] || 0) + 1;
+            return acc;
+        }, {}));
     }
     
     function ordenarDados(dados) {
