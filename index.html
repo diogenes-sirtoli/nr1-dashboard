@@ -366,31 +366,30 @@
                     </tr>
                 </thead>
                 <tbody id="enviosTbody">
-                    <tr><td colspan="7" class="loading">Carregando dados...</td></tr>
+                    <tr><td colspan="7" class="loading">Carregando dados...<\/td><\/tr>
                 </tbody>
-            </table>
-        </div>
-        <div id="paginationEnvios" class="pagination"></div>
-    </div>
+            <\/table>
+        <\/div>
+        <div id="paginationEnvios" class="pagination"><\/div>
+    <\/div>
 
     <div class="status-table">
-        <h2>📲 Status das Mensagens (Agregado)</h2>
+        <h2>📲 Status das Mensagens (Agregado)<\/h2>
         <table id="statusTable">
-            <thead><tr><th>Status</th><th>Quantidade</th></tr></thead>
-            <tbody><tr><td colspan="2" class="loading">Carregando...</td></tr>
-            </tbody>
-        </table>
-    </div>
-    <footer>Clique no título da coluna para ordenar | Clique no código de erro para ver detalhes</footer>
-</div>
+            <thead><tr><th>Status<\/th><th>Quantidade<\/th><\/tr><\/thead>
+            <tbody><tr><td colspan="2" class="loading">Carregando...<\/td><\/tr><\/tbody>
+        <\/table>
+    <\/div>
+    <footer>Clique no título da coluna para ordenar | Clique no código de erro para ver detalhes<\/footer>
+<\/div>
 
 <!-- Modal de erro -->
 <div id="errorModal" class="modal">
     <div class="modal-content">
-        <div class="modal-header"><h3 id="modalTitle">Detalhes do Erro</h3><span class="close-modal">&times;</span></div>
-        <div id="modalBody" style="padding: 15px 0;"></div>
-    </div>
-</div>
+        <div class="modal-header"><h3 id="modalTitle">Detalhes do Erro<\/h3><span class="close-modal">&times;<\/span><\/div>
+        <div id="modalBody" style="padding: 15px 0;"><\/div>
+    <\/div>
+<\/div>
 
 <script>
     const API_URL = 'https://testes-api-n8n-dev.nicehill-2119d736.brazilsouth.azurecontainerapps.io/webhook/nr1-dashboard-data';
@@ -418,10 +417,10 @@
         const explicacao = explicacoesErros[String(codigo)];
         if (explicacao) {
             modalTitle.innerText = explicacao.titulo;
-            modalBody.innerHTML = `<p>${explicacao.explicacao}</p><p><strong>Mensagem original:</strong> ${mensagem}</p>`;
+            modalBody.innerHTML = `<p>${explicacao.explicacao}<\/p><p><strong>Mensagem original:<\/strong> ${mensagem}<\/p>`;
         } else {
             modalTitle.innerText = `Código ${codigo} - Detalhes`;
-            modalBody.innerHTML = `<p><strong>Código ${codigo}</strong><br>${mensagem}</p><p>Consulte a documentação da Meta WhatsApp Business API.</p>`;
+            modalBody.innerHTML = `<p><strong>Código ${codigo}<\/strong><br>${mensagem}<\/p><p>Consulte a documentação da Meta WhatsApp Business API.<\/p>`;
         }
         modal.style.display = 'flex';
     }
@@ -488,7 +487,6 @@
         return '-';
     }
     
-    // Função para verificar se uma data está dentro do período filtrado
     function isDataNoPeriodo(data) {
         if (!data) return true;
         const dataObj = new Date(data);
@@ -499,43 +497,44 @@
         return true;
     }
     
-    // Processa dados distintos com todas as listas
     function processarDadosDistintos(resultado) {
         const mapa = new Map();
         
-        // Adicionar leituras (READ) - PRIORIDADE MAIS BAIXA
-        if (resultado.lista_read && Array.isArray(resultado.lista_read)) {
+        // DEBUG: Verificar o que está chegando
+        console.log('=== DEBUG: Listas recebidas ===');
+        console.log('lista_read:', resultado.lista_read ? resultado.lista_read.length : 'undefined');
+        console.log('lista_sim:', resultado.lista_sim ? resultado.lista_sim.length : 'undefined');
+        console.log('lista_nao:', resultado.lista_nao ? resultado.lista_nao.length : 'undefined');
+        console.log('lista_enviados:', resultado.lista_enviados ? resultado.lista_enviados.length : 'undefined');
+        console.log('lista_falhas:', resultado.lista_falhas ? resultado.lista_falhas.length : 'undefined');
+        console.log('lista_retry:', resultado.lista_retry ? resultado.lista_retry.length : 'undefined');
+        console.log('lista_lgpd:', resultado.lista_lgpd ? resultado.lista_lgpd.length : 'undefined');
+        console.log('lista_sem_whatsapp:', resultado.lista_sem_whatsapp ? resultado.lista_sem_whatsapp.length : 'undefined');
+        
+        // 1. LIDAS (READ) - PRIORIDADE MAIS BAIXA
+        if (resultado.lista_read && Array.isArray(resultado.lista_read) && resultado.lista_read.length > 0) {
+            console.log('Processando', resultado.lista_read.length, 'registros de leitura');
             resultado.lista_read.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone) || item.telefone;
                 const key = telefone;
                 if (!mapa.has(key)) {
                     mapa.set(key, {
-                        nome: item.nome,
+                        nome: item.nome || 'Não identificado',
                         telefone: item.telefone,
                         cargo: item.cargo || '-',
                         empresa: item.empresa || '-',
                         status: 'read',
-                        data: item.leitura_em,
-                        detalhes: `Mensagem lida em ${formatarData(item.leitura_em)}`,
+                        data: item.leitura_em || item.recebido_em || item.timestamp,
+                        detalhes: `Mensagem lida em ${formatarData(item.leitura_em || item.recebido_em || item.timestamp)}`,
                         prioridade: 1
                     });
-                } else {
-                    // Verifica se a leitura é mais recente
-                    const existing = mapa.get(key);
-                    if (item.leitura_em && (!existing.data || new Date(item.leitura_em) > new Date(existing.data))) {
-                        if (existing.prioridade < 3) { // Só atualiza se não for SIM/NAO
-                            existing.status = 'read';
-                            existing.data = item.leitura_em;
-                            existing.detalhes = `Mensagem lida em ${formatarData(item.leitura_em)}`;
-                            existing.prioridade = 1;
-                        }
-                    }
                 }
             });
         }
         
-        // Adicionar enviados sem resposta - PRIORIDADE MÉDIA
-        if (resultado.lista_enviados && Array.isArray(resultado.lista_enviados)) {
+        // 2. AGUARDANDO RESPOSTA (ENVIADOS)
+        if (resultado.lista_enviados && Array.isArray(resultado.lista_enviados) && resultado.lista_enviados.length > 0) {
+            console.log('Processando', resultado.lista_enviados.length, 'registros de enviados');
             resultado.lista_enviados.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone) || item.telefone;
                 const key = telefone;
@@ -554,8 +553,9 @@
             });
         }
         
-        // RETRY - PRIORIDADE MÉDIA
-        if (resultado.lista_retry && Array.isArray(resultado.lista_retry)) {
+        // 3. BLOQUEIOS RETRY
+        if (resultado.lista_retry && Array.isArray(resultado.lista_retry) && resultado.lista_retry.length > 0) {
+            console.log('Processando', resultado.lista_retry.length, 'registros de RETRY');
             resultado.lista_retry.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone) || item.telefone;
                 const key = telefone;
@@ -574,8 +574,9 @@
             });
         }
         
-        // LGPD - PRIORIDADE MÉDIA
-        if (resultado.lista_lgpd && Array.isArray(resultado.lista_lgpd)) {
+        // 4. BLOQUEIOS LGPD
+        if (resultado.lista_lgpd && Array.isArray(resultado.lista_lgpd) && resultado.lista_lgpd.length > 0) {
+            console.log('Processando', resultado.lista_lgpd.length, 'registros de LGPD');
             resultado.lista_lgpd.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone) || item.telefone;
                 const key = telefone;
@@ -594,8 +595,9 @@
             });
         }
         
-        // Sem WhatsApp - PRIORIDADE MÉDIA
-        if (resultado.lista_sem_whatsapp && Array.isArray(resultado.lista_sem_whatsapp)) {
+        // 5. SEM WHATSAPP
+        if (resultado.lista_sem_whatsapp && Array.isArray(resultado.lista_sem_whatsapp) && resultado.lista_sem_whatsapp.length > 0) {
+            console.log('Processando', resultado.lista_sem_whatsapp.length, 'registros de Sem WhatsApp');
             resultado.lista_sem_whatsapp.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone) || item.telefone;
                 const key = telefone;
@@ -614,14 +616,15 @@
             });
         }
         
-        // Falhas (failed) - PRIORIDADE MÉDIA
-        if (resultado.lista_falhas && Array.isArray(resultado.lista_falhas)) {
+        // 6. FALHAS (FAILED)
+        if (resultado.lista_falhas && Array.isArray(resultado.lista_falhas) && resultado.lista_falhas.length > 0) {
+            console.log('Processando', resultado.lista_falhas.length, 'registros de Falhas');
             resultado.lista_falhas.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone) || item.telefone;
                 const key = telefone;
                 if (!mapa.has(key)) {
                     mapa.set(key, {
-                        nome: item.nome,
+                        nome: item.nome || 'Não identificado',
                         telefone: item.telefone,
                         cargo: item.cargo || '-',
                         empresa: item.empresa || '-',
@@ -636,8 +639,9 @@
             });
         }
         
-        // Respostas NÃO - PRIORIDADE ALTA (sobrescreve)
-        if (resultado.lista_nao && Array.isArray(resultado.lista_nao)) {
+        // 7. RESPOSTAS NÃO - PRIORIDADE ALTA
+        if (resultado.lista_nao && Array.isArray(resultado.lista_nao) && resultado.lista_nao.length > 0) {
+            console.log('Processando', resultado.lista_nao.length, 'registros de Respostas NÃO');
             resultado.lista_nao.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone) || item.telefone;
                 const key = telefone;
@@ -654,8 +658,9 @@
             });
         }
         
-        // Respostas SIM - PRIORIDADE MAIS ALTA (sobrescreve todos)
-        if (resultado.lista_sim && Array.isArray(resultado.lista_sim)) {
+        // 8. RESPOSTAS SIM - PRIORIDADE MAIS ALTA
+        if (resultado.lista_sim && Array.isArray(resultado.lista_sim) && resultado.lista_sim.length > 0) {
+            console.log('Processando', resultado.lista_sim.length, 'registros de Respostas SIM');
             resultado.lista_sim.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone) || item.telefone;
                 const key = telefone;
@@ -674,10 +679,13 @@
         
         enviosDistintos = Array.from(mapa.values());
         console.log('Total de contatos distintos:', enviosDistintos.length);
-        console.log('Status counts:', enviosDistintos.reduce((acc, item) => {
-            acc[item.status] = (acc[item.status] || 0) + 1;
-            return acc;
-        }, {}));
+        
+        // Estatísticas por status
+        const statusCount = {};
+        enviosDistintos.forEach(item => {
+            statusCount[item.status] = (statusCount[item.status] || 0) + 1;
+        });
+        console.log('Status counts:', statusCount);
     }
     
     function ordenarDados(dados) {
@@ -719,12 +727,10 @@
     function getDadosFiltrados() {
         let dados = [...enviosDistintos];
         
-        // Filtro por status
         if (filtroStatus !== 'all') {
             dados = dados.filter(item => item.status === filtroStatus);
         }
         
-        // Filtro por período (data)
         if (dataStart || dataEnd) {
             dados = dados.filter(item => {
                 if (!item.data) return false;
@@ -732,7 +738,6 @@
             });
         }
         
-        // Filtro por erro
         if (buscaErro) {
             dados = dados.filter(item => 
                 (item.codigo_erro && String(item.codigo_erro).toLowerCase().includes(buscaErro)) ||
@@ -744,7 +749,6 @@
         return dados;
     }
     
-    // Atualiza o resumo de estatísticas dos status filtrados
     function atualizarStatsResumo(dadosFiltrados) {
         const stats = {};
         dadosFiltrados.forEach(item => {
@@ -779,7 +783,6 @@
         const total = dadosFiltrados.length;
         document.getElementById('totalEnvioCount').innerHTML = `(Total: ${total} contatos distintos)`;
         
-        // Atualizar resumo de estatísticas
         atualizarStatsResumo(dadosFiltrados);
         
         dadosFiltrados = ordenarDados(dadosFiltrados);
@@ -791,7 +794,7 @@
         
         const tbody = document.getElementById('enviosTbody');
         if (paginaDados.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7">Nenhum registro encontrado. </td><\/tr>';
+            tbody.innerHTML = '<tr><td colspan="7">Nenhum registro encontrado.<\/td><\/tr>';
         } else {
             let html = '';
             for (let item of paginaDados) {
@@ -915,9 +918,10 @@
             const response = await fetch(API_URL);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
-            console.log('Dados recebidos:', data);
+            console.log('Dados recebidos (primeiros níveis):', Object.keys(data));
             
             const resultado = data.resultado || data;
+            console.log('Resultado (primeiros níveis):', Object.keys(resultado));
             
             if (resultado.atualizado_em) {
                 document.getElementById('last-update').innerHTML = `Última atualização: ${new Date(resultado.atualizado_em).toLocaleString('pt-BR')}`;
@@ -975,7 +979,6 @@
                 row.insertCell(1).innerText = total;
             }
             
-            // Remover event listener anterior e adicionar novo
             const filterStatusSelect = document.getElementById('filterStatus');
             const newFilterStatus = filterStatusSelect.cloneNode(true);
             filterStatusSelect.parentNode.replaceChild(newFilterStatus, filterStatusSelect);
