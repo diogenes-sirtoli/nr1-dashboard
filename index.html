@@ -366,30 +366,30 @@
                     </tr>
                 </thead>
                 <tbody id="enviosTbody">
-                    <tr><td colspan="7" class="loading">Carregando dados...<\/td><\/tr>
+                    <tr><td colspan="7" class="loading">Carregando dados...</td></tr>
                 </tbody>
-            <\/table>
-        <\/div>
-        <div id="paginationEnvios" class="pagination"><\/div>
-    <\/div>
+            </table>
+        </div>
+        <div id="paginationEnvios" class="pagination"></div>
+    </div>
 
     <div class="status-table">
-        <h2>📲 Status das Mensagens (Agregado)<\/h2>
+        <h2>📲 Status das Mensagens (Agregado)</h2>
         <table id="statusTable">
-            <thead><tr><th>Status<\/th><th>Quantidade<\/th><\/tr><\/thead>
-            <tbody><tr><td colspan="2" class="loading">Carregando...<\/td><\/tr><\/tbody>
-        <\/table>
-    <\/div>
-    <footer>Clique no título da coluna para ordenar | Clique no código de erro para ver detalhes<\/footer>
-<\/div>
+            <thead><tr><th>Status</th><th>Quantidade</th></tr></thead>
+            <tbody><tr><td colspan="2" class="loading">Carregando...</td></tr></tbody>
+        </table>
+    </div>
+    <footer>Clique no título da coluna para ordenar | Clique no código de erro para ver detalhes</footer>
+</div>
 
 <!-- Modal de erro -->
 <div id="errorModal" class="modal">
     <div class="modal-content">
-        <div class="modal-header"><h3 id="modalTitle">Detalhes do Erro<\/h3><span class="close-modal">&times;<\/span><\/div>
-        <div id="modalBody" style="padding: 15px 0;"><\/div>
-    <\/div>
-<\/div>
+        <div class="modal-header"><h3 id="modalTitle">Detalhes do Erro</h3><span class="close-modal">&times;</span></div>
+        <div id="modalBody" style="padding: 15px 0;"></div>
+    </div>
+</div>
 
 <script>
     const API_URL = 'https://testes-api-n8n-dev.nicehill-2119d736.brazilsouth.azurecontainerapps.io/webhook/nr1-dashboard-data';
@@ -417,10 +417,10 @@
         const explicacao = explicacoesErros[String(codigo)];
         if (explicacao) {
             modalTitle.innerText = explicacao.titulo;
-            modalBody.innerHTML = `<p>${explicacao.explicacao}<\/p><p><strong>Mensagem original:<\/strong> ${mensagem}<\/p>`;
+            modalBody.innerHTML = `<p>${explicacao.explicacao}</p><p><strong>Mensagem original:</strong> ${mensagem}</p>`;
         } else {
             modalTitle.innerText = `Código ${codigo} - Detalhes`;
-            modalBody.innerHTML = `<p><strong>Código ${codigo}<\/strong><br>${mensagem}<\/p><p>Consulte a documentação da Meta WhatsApp Business API.<\/p>`;
+            modalBody.innerHTML = `<p><strong>Código ${codigo}</strong><br>${mensagem}</p><p>Consulte a documentação da Meta WhatsApp Business API.</p>`;
         }
         modal.style.display = 'flex';
     }
@@ -794,12 +794,12 @@
         
         const tbody = document.getElementById('enviosTbody');
         if (paginaDados.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7">Nenhum registro encontrado.<\/td><\/tr>';
+            tbody.innerHTML = '<tr><td colspan="7">Nenhum registro encontrado.</td></tr>';
         } else {
             let html = '';
             for (let item of paginaDados) {
                 const telefoneNorm = normalizarTelefone(item.telefone);
-                const telefoneHtml = telefoneNorm ? `<a href="https://wa.me/${telefoneNorm}" target="_blank" style="background:#25D366; color:white; padding:4px 10px; border-radius:20px; text-decoration:none; font-size:12px; display:inline-block;">${escapeHtml(telefoneNorm)}<\/a>` : escapeHtml(item.telefone) || '-';
+                const telefoneHtml = telefoneNorm ? `<a href="https://wa.me/${telefoneNorm}" target="_blank" style="background:#25D366; color:white; padding:4px 10px; border-radius:20px; text-decoration:none; font-size:12px; display:inline-block;">${escapeHtml(telefoneNorm)}</a>` : escapeHtml(item.telefone) || '-';
                 
                 html += `<tr>
                     <td style="max-width: 200px; word-break: break-word;">${escapeHtml(formatarNome(item.nome))}<br><small>${telefoneHtml}</small></td>
