@@ -249,6 +249,22 @@
         .close-modal { font-size: 28px; font-weight: bold; cursor: pointer; color: #aaa; }
         .close-modal:hover { color: #333; }
         
+        .stats-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .stat-item {
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
         @media (max-width: 768px) {
             .filtro-row { flex-direction: column; align-items: stretch; }
             .search-box { justify-content: stretch; }
@@ -333,6 +349,7 @@
                     <option value="100">100</option>
                 </select>
             </div>
+            <div id="statsSummary" class="stats-summary"></div>
         </div>
         
         <div class="envios-table-wrapper">
@@ -470,6 +487,18 @@
         return '-';
     }
     
+    // Função para verificar se uma data está dentro do período filtrado
+    function isDataNoPeriodo(data) {
+        if (!data) return true;
+        const dataObj = new Date(data);
+        if (isNaN(dataObj.getTime())) return true;
+        
+        if (dataStart && dataObj < dataStart) return false;
+        if (dataEnd && dataObj > dataEnd) return false;
+        return true;
+    }
+    
+    // Processa dados distintos com todas as listas
     function processarDadosDistintos(resultado) {
         const mapa = new Map();
         
@@ -477,8 +506,9 @@
         if (resultado.lista_read && Array.isArray(resultado.lista_read)) {
             resultado.lista_read.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone);
-                if (!mapa.has(telefone)) {
-                    mapa.set(telefone, {
+                const key = telefone || item.telefone;
+                if (!mapa.has(key)) {
+                    mapa.set(key, {
                         nome: item.nome,
                         telefone: item.telefone,
                         cargo: item.cargo || '-',
@@ -487,6 +517,14 @@
                         data: item.leitura_em,
                         detalhes: `Mensagem lida em ${formatarData(item.leitura_em)}`
                     });
+                } else {
+                    // Se já existe, atualiza apenas se a data for mais recente
+                    const existing = mapa.get(key);
+                    if (item.leitura_em && (!existing.data || new Date(item.leitura_em) > new Date(existing.data))) {
+                        existing.status = 'read';
+                        existing.data = item.leitura_em;
+                        existing.detalhes = `Mensagem lida em ${formatarData(item.leitura_em)}`;
+                    }
                 }
             });
         }
@@ -495,8 +533,9 @@
         if (resultado.lista_enviados && Array.isArray(resultado.lista_enviados)) {
             resultado.lista_enviados.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone);
-                if (!mapa.has(telefone)) {
-                    mapa.set(telefone, {
+                const key = telefone || item.telefone;
+                if (!mapa.has(key)) {
+                    mapa.set(key, {
                         nome: item.nome,
                         telefone: item.telefone,
                         cargo: item.cargo || '-',
@@ -509,11 +548,12 @@
             });
         }
         
-        // Respostas SIM (sobrescreve enviado/read)
+        // Respostas SIM
         if (resultado.lista_sim && Array.isArray(resultado.lista_sim)) {
             resultado.lista_sim.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone);
-                mapa.set(telefone, {
+                const key = telefone || item.telefone;
+                mapa.set(key, {
                     nome: item.nome,
                     telefone: item.telefone,
                     cargo: item.cargo || '-',
@@ -525,11 +565,12 @@
             });
         }
         
-        // Respostas NÃO (sobrescreve enviado/read)
+        // Respostas NÃO
         if (resultado.lista_nao && Array.isArray(resultado.lista_nao)) {
             resultado.lista_nao.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone);
-                mapa.set(telefone, {
+                const key = telefone || item.telefone;
+                mapa.set(key, {
                     nome: item.nome,
                     telefone: item.telefone,
                     cargo: item.cargo || '-',
@@ -545,8 +586,9 @@
         if (resultado.lista_falhas && Array.isArray(resultado.lista_falhas)) {
             resultado.lista_falhas.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone);
-                if (!mapa.has(telefone)) {
-                    mapa.set(telefone, {
+                const key = telefone || item.telefone;
+                if (!mapa.has(key)) {
+                    mapa.set(key, {
                         nome: item.nome,
                         telefone: item.telefone,
                         cargo: item.cargo || '-',
@@ -565,8 +607,9 @@
         if (resultado.lista_retry && Array.isArray(resultado.lista_retry)) {
             resultado.lista_retry.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone);
-                if (!mapa.has(telefone)) {
-                    mapa.set(telefone, {
+                const key = telefone || item.telefone;
+                if (!mapa.has(key)) {
+                    mapa.set(key, {
                         nome: item.nome,
                         telefone: item.telefone,
                         cargo: item.cargo || '-',
@@ -583,8 +626,9 @@
         if (resultado.lista_lgpd && Array.isArray(resultado.lista_lgpd)) {
             resultado.lista_lgpd.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone);
-                if (!mapa.has(telefone)) {
-                    mapa.set(telefone, {
+                const key = telefone || item.telefone;
+                if (!mapa.has(key)) {
+                    mapa.set(key, {
                         nome: item.nome,
                         telefone: item.telefone,
                         cargo: item.cargo || '-',
@@ -601,8 +645,9 @@
         if (resultado.lista_sem_whatsapp && Array.isArray(resultado.lista_sem_whatsapp)) {
             resultado.lista_sem_whatsapp.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone);
-                if (!mapa.has(telefone)) {
-                    mapa.set(telefone, {
+                const key = telefone || item.telefone;
+                if (!mapa.has(key)) {
+                    mapa.set(key, {
                         nome: item.nome,
                         telefone: item.telefone,
                         cargo: item.cargo || '-',
@@ -658,17 +703,20 @@
     function getDadosFiltrados() {
         let dados = [...enviosDistintos];
         
+        // Filtro por status
         if (filtroStatus !== 'all') {
             dados = dados.filter(item => item.status === filtroStatus);
         }
         
-        if (dataStart) {
-            dados = dados.filter(item => item.data && new Date(item.data) >= dataStart);
-        }
-        if (dataEnd) {
-            dados = dados.filter(item => item.data && new Date(item.data) <= dataEnd);
+        // Filtro por período (data)
+        if (dataStart || dataEnd) {
+            dados = dados.filter(item => {
+                if (!item.data) return false;
+                return isDataNoPeriodo(item.data);
+            });
         }
         
+        // Filtro por erro
         if (buscaErro) {
             dados = dados.filter(item => 
                 (item.codigo_erro && String(item.codigo_erro).toLowerCase().includes(buscaErro)) ||
@@ -678,6 +726,111 @@
         }
         
         return dados;
+    }
+    
+    // Atualiza o resumo de estatísticas dos status filtrados
+    function atualizarStatsResumo(dadosFiltrados) {
+        const stats = {};
+        dadosFiltrados.forEach(item => {
+            stats[item.status] = (stats[item.status] || 0) + 1;
+        });
+        
+        const statusLabels = {
+            'sim': '✅ SIM',
+            'nao': '❌ NÃO',
+            'read': '👁️ Lidas',
+            'enviado': '📨 Aguardando resposta',
+            'falha': '⚠️ Falhas',
+            'retry': '🔄 RETRY',
+            'lgpd': '🔒 LGPD',
+            'semwhatsapp': '📵 Sem WhatsApp'
+        };
+        
+        const statsHtml = Object.entries(stats)
+            .map(([status, count]) => `<span class="stat-item" style="background: #e9ecef;">${statusLabels[status] || status}: ${count}</span>`)
+            .join('');
+        
+        const statsDiv = document.getElementById('statsSummary');
+        if (statsHtml) {
+            statsDiv.innerHTML = `<strong>📊 Resumo do filtro:</strong> ${statsHtml}`;
+        } else {
+            statsDiv.innerHTML = '';
+        }
+    }
+    
+    function renderizarEnvios() {
+        let dadosFiltrados = getDadosFiltrados();
+        const total = dadosFiltrados.length;
+        document.getElementById('totalEnvioCount').innerHTML = `(Total: ${total} contatos distintos)`;
+        
+        // Atualizar resumo de estatísticas
+        atualizarStatsResumo(dadosFiltrados);
+        
+        dadosFiltrados = ordenarDados(dadosFiltrados);
+        
+        const itensPorPagina = parseInt(document.getElementById('perPage').value);
+        const totalPaginas = Math.ceil(total / itensPorPagina);
+        const inicio = (paginaAtual - 1) * itensPorPagina;
+        const paginaDados = dadosFiltrados.slice(inicio, inicio + itensPorPagina);
+        
+        const tbody = document.getElementById('enviosTbody');
+        if (paginaDados.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7">Nenhum registro encontrado. </td><\/tr>';
+        } else {
+            let html = '';
+            for (let item of paginaDados) {
+                const telefoneNorm = normalizarTelefone(item.telefone);
+                const telefoneHtml = telefoneNorm ? `<a href="https://wa.me/${telefoneNorm}" target="_blank" style="background:#25D366; color:white; padding:4px 10px; border-radius:20px; text-decoration:none; font-size:12px; display:inline-block;">${escapeHtml(telefoneNorm)}<\/a>` : escapeHtml(item.telefone) || '-';
+                
+                html += `<tr>
+                    <td style="max-width: 200px; word-break: break-word;">${escapeHtml(formatarNome(item.nome))}<br><small>${telefoneHtml}</small></td>
+                    <td>${getTipoContato(item)}</td>
+                    <td>${escapeHtml(item.cargo || '-')}</td>
+                    <td>${escapeHtml(item.empresa || '-')}</td>
+                    <td>${getStatusBadge(item.status)}</td>
+                    <td>${formatarData(item.data)}</td>
+                    <td style="max-width: 200px;">${item.detalhes || '-'}</td>
+                </tr>`;
+            }
+            tbody.innerHTML = html;
+        }
+        
+        const pagContainer = document.getElementById('paginationEnvios');
+        if (totalPaginas <= 1) {
+            pagContainer.innerHTML = '';
+        } else {
+            let pagHtml = `<button onclick="mudarPagina(${paginaAtual - 1})" ${paginaAtual === 1 ? 'disabled' : ''}>◀ Anterior</button>`;
+            for (let i = 1; i <= Math.min(totalPaginas, 5); i++) {
+                pagHtml += `<button onclick="mudarPagina(${i})" class="${paginaAtual === i ? 'active-page' : ''}">${i}</button>`;
+            }
+            if (totalPaginas > 5) pagHtml += `<span>...</span><button onclick="mudarPagina(${totalPaginas})">${totalPaginas}</button>`;
+            pagHtml += `<button onclick="mudarPagina(${paginaAtual + 1})" ${paginaAtual === totalPaginas ? 'disabled' : ''}>Próxima ▶</button>`;
+            pagHtml += `<span class="page-info">Página ${paginaAtual} de ${totalPaginas}</span>`;
+            pagContainer.innerHTML = pagHtml;
+        }
+    }
+    
+    function mudarPagina(novaPagina) {
+        paginaAtual = novaPagina;
+        renderizarEnvios();
+    }
+    
+    function configurarOrdenacao() {
+        const headers = document.querySelectorAll('#enviosTable th.sortable');
+        headers.forEach(header => {
+            header.addEventListener('click', () => {
+                const coluna = header.getAttribute('data-sort');
+                headers.forEach(h => h.classList.remove('asc', 'desc'));
+                if (ordenacao.coluna === coluna) {
+                    ordenacao.ordem = ordenacao.ordem === 'asc' ? 'desc' : 'asc';
+                } else {
+                    ordenacao.coluna = coluna;
+                    ordenacao.ordem = 'asc';
+                }
+                header.classList.add(ordenacao.ordem);
+                renderizarEnvios();
+            });
+        });
     }
     
     function setQuickFilter(periodo) {
@@ -738,78 +891,6 @@
         buscaErro = '';
         paginaAtual = 1;
         renderizarEnvios();
-    }
-    
-    function renderizarEnvios() {
-        let dadosFiltrados = getDadosFiltrados();
-        const total = dadosFiltrados.length;
-        document.getElementById('totalEnvioCount').innerHTML = `(Total: ${total} contatos distintos)`;
-        
-        dadosFiltrados = ordenarDados(dadosFiltrados);
-        
-        const itensPorPagina = parseInt(document.getElementById('perPage').value);
-        const totalPaginas = Math.ceil(total / itensPorPagina);
-        const inicio = (paginaAtual - 1) * itensPorPagina;
-        const paginaDados = dadosFiltrados.slice(inicio, inicio + itensPorPagina);
-        
-        const tbody = document.getElementById('enviosTbody');
-        if (paginaDados.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7">Nenhum registro encontrado.</td></tr>';
-        } else {
-            let html = '';
-            for (let item of paginaDados) {
-                const telefoneNorm = normalizarTelefone(item.telefone);
-                const telefoneHtml = telefoneNorm ? `<a href="https://wa.me/${telefoneNorm}" target="_blank" style="background:#25D366; color:white; padding:4px 10px; border-radius:20px; text-decoration:none; font-size:12px; display:inline-block;">${escapeHtml(telefoneNorm)}<\/a>` : escapeHtml(item.telefone) || '-';
-                
-                html += `<tr>
-                    <td style="max-width: 200px; word-break: break-word;">${escapeHtml(formatarNome(item.nome))}<br><small>${telefoneHtml}</small></td>
-                    <td>${getTipoContato(item)}</td>
-                    <td>${escapeHtml(item.cargo || '-')}</td>
-                    <td>${escapeHtml(item.empresa || '-')}</td>
-                    <td>${getStatusBadge(item.status)}</td>
-                    <td>${formatarData(item.data)}</td>
-                    <td style="max-width: 200px;">${item.detalhes || '-'}</td>
-                </tr>`;
-            }
-            tbody.innerHTML = html;
-        }
-        
-        const pagContainer = document.getElementById('paginationEnvios');
-        if (totalPaginas <= 1) {
-            pagContainer.innerHTML = '';
-        } else {
-            let pagHtml = `<button onclick="mudarPagina(${paginaAtual - 1})" ${paginaAtual === 1 ? 'disabled' : ''}>◀ Anterior</button>`;
-            for (let i = 1; i <= Math.min(totalPaginas, 5); i++) {
-                pagHtml += `<button onclick="mudarPagina(${i})" class="${paginaAtual === i ? 'active-page' : ''}">${i}</button>`;
-            }
-            if (totalPaginas > 5) pagHtml += `<span>...</span><button onclick="mudarPagina(${totalPaginas})">${totalPaginas}</button>`;
-            pagHtml += `<button onclick="mudarPagina(${paginaAtual + 1})" ${paginaAtual === totalPaginas ? 'disabled' : ''}>Próxima ▶</button>`;
-            pagHtml += `<span class="page-info">Página ${paginaAtual} de ${totalPaginas}</span>`;
-            pagContainer.innerHTML = pagHtml;
-        }
-    }
-    
-    function mudarPagina(novaPagina) {
-        paginaAtual = novaPagina;
-        renderizarEnvios();
-    }
-    
-    function configurarOrdenacao() {
-        const headers = document.querySelectorAll('#enviosTable th.sortable');
-        headers.forEach(header => {
-            header.addEventListener('click', () => {
-                const coluna = header.getAttribute('data-sort');
-                headers.forEach(h => h.classList.remove('asc', 'desc'));
-                if (ordenacao.coluna === coluna) {
-                    ordenacao.ordem = ordenacao.ordem === 'asc' ? 'desc' : 'asc';
-                } else {
-                    ordenacao.coluna = coluna;
-                    ordenacao.ordem = 'asc';
-                }
-                header.classList.add(ordenacao.ordem);
-                renderizarEnvios();
-            });
-        });
     }
     
     async function loadData() {
@@ -878,7 +959,11 @@
                 row.insertCell(1).innerText = total;
             }
             
-            document.getElementById('filterStatus').addEventListener('change', function() {
+            // Remover event listener anterior e adicionar novo
+            const filterStatusSelect = document.getElementById('filterStatus');
+            const newFilterStatus = filterStatusSelect.cloneNode(true);
+            filterStatusSelect.parentNode.replaceChild(newFilterStatus, filterStatusSelect);
+            newFilterStatus.addEventListener('change', function() {
                 filtroStatus = this.value;
                 paginaAtual = 1;
                 renderizarEnvios();
