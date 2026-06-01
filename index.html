@@ -264,6 +264,40 @@
             font-size: 12px;
             font-weight: bold;
         }
+
+        /* Gráfico de evolução de status */
+        .evolution-chart {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .evolution-chart h2 {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            color: #333;
+            border-left: 4px solid #28a745;
+            padding-left: 10px;
+        }
+        .chart-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .chart-controls button {
+            padding: 6px 12px;
+            background: #e9ecef;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .chart-controls button.active {
+            background: #28a745;
+            color: white;
+        }
         
         @media (max-width: 768px) {
             .filtro-row { flex-direction: column; align-items: stretch; }
@@ -297,6 +331,17 @@
         <div class="card"><h3>📭 Sem Resposta</h3><div class="number" id="totalSemResposta">-</div></div>
         <div class="card"><h3>📨 Enviados</h3><div class="number" id="totalEnviados">-</div></div>
         <div class="card"><h3>⏳ Não Enviados</h3><div class="number" id="totalNaoEnviados">-</div></div>
+    </div>
+
+    <!-- NOVO: Gráfico de evolução dos status das mensagens -->
+    <div class="evolution-chart">
+        <h2>📊 Evolução dos Status das Mensagens (por período)</h2>
+        <div class="chart-controls">
+            <button onclick="setChartView('daily')" id="viewDaily" class="active">📅 Por dia</button>
+            <button onclick="setChartView('hourly')" id="viewHourly">⏰ Por hora</button>
+        </div>
+        <canvas id="evolutionChart"></canvas>
+        <p style="font-size: 12px; color: #666; margin-top: 10px;">* Gráfico baseado no filtro de período selecionado acima</p>
     </div>
 
     <div class="charts-row">
@@ -393,7 +438,7 @@
 
 <script>
     const API_URL = 'https://testes-api-n8n-dev.nicehill-2119d736.brazilsouth.azurecontainerapps.io/webhook/nr1-dashboard-data';
-    let charts = { respostas: null, tentativas: null };
+    let charts = { respostas: null, tentativas: null, evolution: null };
     let enviosDistintos = [];
     let paginaAtual = 1;
     let ordenacao = { coluna: 'data', ordem: 'desc' };
@@ -401,8 +446,16 @@
     let buscaErro = '';
     let dataStart = null;
     let dataEnd = null;
+    let chartView = 'daily'; // 'daily' or 'hourly'
+    let todosStatusMensagens = []; // Armazenar todos os status_mensagens originais para filtro
     
     const statusTraducao = { 'sent': '📨 Enviada', 'delivered': '✅ Entregue', 'read': '👁️ Lida', 'failed': '❌ Falhou', 'undefined': '❓ Indefinido' };
+    const statusColors = {
+        'sent': '#17a2b8',
+        'delivered': '#28a745',
+        'read': '#8e44ad',
+        'failed': '#dc3545'
+    };
     
     const explicacoesErros = {
         "131049": { titulo: "Código 131049 - Limite de marketing atingido", explicacao: "O destinatário recebeu muitas mensagens de marketing nos últimos dias e o WhatsApp bloqueou temporariamente o envio. Não reenvie imediatamente – espere pelo menos 24 horas." },
@@ -497,10 +550,152 @@
         return true;
     }
     
+    // NOVA FUNÇÃO: Processar e criar gráfico de evolução dos status
+    function processarEvolucaoStatusMensagens(resultado) {
+        // Extrair todas as mensagens de status_mensagens (usando lista_read, lista_falhas, etc.)
+        const todasMensagens = [];
+        
+        // Adicionar mensagens lidas
+        if (resultado.lista_read && Array.isArray(resultado.lista_read)) {
+            resultado.lista_read.forEach(msg => {
+                if (msg.leitura_em) {
+                    todasMensagens.push({
+                        status: 'read',
+                        data: msg.leitura_em,
+                        telefone: msg.telefone
+                    });
+                }
+            });
+        }
+        
+        // Adicionar falhas
+        if (resultado.lista_falhas && Array.isArray(resultado.lista_falhas)) {
+            resultado.lista_falhas.forEach(msg => {
+                if (msg.timestamp) {
+                    todasMensagens.push({
+                        status: 'failed',
+                        data: msg.timestamp,
+                        telefone: msg.telefone,
+                        codigo_erro: msg.codigo_erro
+                    });
+                }
+            });
+        }
+        
+        // Adicionar enviados (aguardando resposta)
+        if (resultado.lista_enviados && Array.isArray(resultado.lista_enviados)) {
+            resultado.lista_enviados.forEach(msg => {
+                if (msg.enviado_em) {
+                    todasMensagens.push({
+                        status: 'sent',
+                        data: msg.enviado_em,
+                        telefone: msg.telefone
+                    });
+                }
+            });
+        }
+        
+        // Adicionar entregues (se tiver delivered - pode ser inferido de outros campos)
+        // Como não temos delivered explícito, vamos considerar que sent + read indica delivered
+        
+        // Filtrar por período
+        let mensagensFiltradas = todasMensagens;
+        if (dataStart || dataEnd) {
+            mensagensFiltradas = todasMensagens.filter(msg => isDataNoPeriodo(msg.data));
+        }
+        
+        if (mensagensFiltradas.length === 0) {
+            if (charts.evolution) charts.evolution.destroy();
+            return;
+        }
+        
+        // Agrupar por data/hora
+        const agrupado = {};
+        
+        mensagensFiltradas.forEach(msg => {
+            const dataObj = new Date(msg.data);
+            if (isNaN(dataObj.getTime())) return;
+            
+            let chave;
+            if (chartView === 'daily') {
+                chave = dataObj.toLocaleDateString('pt-BR');
+            } else {
+                chave = dataObj.toLocaleString('pt-BR', { 
+                    dateStyle: 'short', 
+                    timeStyle: 'short'
+                });
+                // Arredondar para a hora
+                chave = chave.replace(/:\d{2}$/, '');
+            }
+            
+            if (!agrupado[chave]) {
+                agrupado[chave] = { sent: 0, delivered: 0, read: 0, failed: 0, timestamp: dataObj.getTime() };
+            }
+            
+            if (msg.status === 'sent') agrupado[chave].sent++;
+            else if (msg.status === 'read') agrupado[chave].read++;
+            else if (msg.status === 'failed') agrupado[chave].failed++;
+        });
+        
+        // Converter para arrays ordenados
+        const labels = Object.keys(agrupado).sort((a, b) => agrupado[a].timestamp - agrupado[b].timestamp);
+        const sentData = labels.map(l => agrupado[l].sent);
+        const readData = labels.map(l => agrupado[l].read);
+        const failedData = labels.map(l => agrupado[l].failed);
+        
+        // Destruir gráfico anterior se existir
+        if (charts.evolution) charts.evolution.destroy();
+        
+        const ctx = document.getElementById('evolutionChart').getContext('2d');
+        charts.evolution = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: '📨 Enviadas',
+                        data: sentData,
+                        borderColor: '#17a2b8',
+                        backgroundColor: 'rgba(23, 162, 184, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: '👁️ Lidas',
+                        data: readData,
+                        borderColor: '#8e44ad',
+                        backgroundColor: 'rgba(142, 68, 173, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: '❌ Falhas',
+                        data: failedData,
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: { mode: 'index', intersect: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: 'Quantidade de mensagens' } },
+                    x: { title: { display: true, text: chartView === 'daily' ? 'Data' : 'Hora' } }
+                }
+            }
+        });
+    }
+    
     function processarDadosDistintos(resultado) {
         const mapa = new Map();
         
-        // DEBUG: Verificar o que está chegando
         console.log('=== DEBUG: Listas recebidas ===');
         console.log('lista_read:', resultado.lista_read ? resultado.lista_read.length : 'undefined');
         console.log('lista_sim:', resultado.lista_sim ? resultado.lista_sim.length : 'undefined');
@@ -878,6 +1073,9 @@
         document.getElementById('startDate').value = dataStart ? dataStart.toISOString().split('T')[0] : '';
         document.getElementById('endDate').value = dataEnd.toISOString().split('T')[0];
         paginaAtual = 1;
+        
+        // Recarregar gráfico com o novo período
+        carregarDadosGrafico();
         renderizarEnvios();
     }
     
@@ -887,6 +1085,8 @@
         dataStart = start ? new Date(start + 'T00:00:00') : null;
         dataEnd = end ? new Date(end + 'T23:59:59') : null;
         paginaAtual = 1;
+        
+        carregarDadosGrafico();
         renderizarEnvios();
     }
     
@@ -896,7 +1096,29 @@
         dataStart = null;
         dataEnd = null;
         paginaAtual = 1;
+        
+        carregarDadosGrafico();
         renderizarEnvios();
+    }
+    
+    function setChartView(view) {
+        chartView = view;
+        document.getElementById('viewDaily').classList.remove('active');
+        document.getElementById('viewHourly').classList.remove('active');
+        document.getElementById(`view${view === 'daily' ? 'Daily' : 'Hourly'}`).classList.add('active');
+        carregarDadosGrafico();
+    }
+    
+    async function carregarDadosGrafico() {
+        try {
+            const response = await fetch(API_URL);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            const resultado = data.resultado || data;
+            processarEvolucaoStatusMensagens(resultado);
+        } catch (error) {
+            console.error('Erro ao carregar dados do gráfico:', error);
+        }
     }
     
     function filtrarPorErro() {
@@ -967,6 +1189,7 @@
             });
             
             processarDadosDistintos(resultado);
+            processarEvolucaoStatusMensagens(resultado);
             renderizarEnvios();
             configurarOrdenacao();
             
