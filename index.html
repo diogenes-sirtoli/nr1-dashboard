@@ -921,6 +921,8 @@
     
     function getDadosFiltrados() {
         let dados = [...enviosDistintos];
+
+        dados = dados.filter(item => item.nome !== 'Não identificado');
         
         if (filtroStatus !== 'all') {
             dados = dados.filter(item => item.status === filtroStatus);
@@ -1145,34 +1147,6 @@
             const resultado = data.resultado || data;
             console.log('Resultado (primeiros níveis):', Object.keys(resultado));
 
-
-
-
-
-
-        if (resultado.lista_falhas) {
-            const semNome = resultado.lista_falhas.filter(f => !f.nome || f.nome === 'Não identificado');
-            console.log('=== DIAGNÓSTICO ===');
-            console.log('Total de falhas:', resultado.lista_falhas.length);
-            console.log('Falhas sem nome:', semNome.length);
-            if (semNome.length > 0) {
-                console.log('Primeiras 5 falhas sem nome:', semNome.slice(0,5).map(f => ({ 
-                    telefone: f.telefone, 
-                    codigo: f.codigo_erro 
-                })));
-            }
-        }
-
-
-
-
-
-
-
-
-
-
-            
             if (resultado.atualizado_em) {
                 document.getElementById('last-update').innerHTML = `Última atualização: ${new Date(resultado.atualizado_em).toLocaleString('pt-BR')}`;
             }
