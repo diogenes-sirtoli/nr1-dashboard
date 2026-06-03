@@ -483,7 +483,7 @@
     window.onclick = function(event) { if (event.target === document.getElementById('errorModal')) fecharModal(); };
     
     function formatarNome(nomeCompleto) {
-        if (!nomeCompleto || nomeCompleto === 'Não identificado') return 'Não identificado';
+        if (!nomeCompleto || nomeCompleto === 'Não identificado' || nomeCompleto === null) return 'Não identificado';
         return String(nomeCompleto).trim();
     }
     
@@ -735,7 +735,7 @@
                 const key = telefone;
                 if (!mapa.has(key)) {
                     mapa.set(key, {
-                        nome: item.nome,
+                        nome: item.nome || 'Não identificado',
                         telefone: item.telefone,
                         cargo: item.cargo || '-',
                         empresa: item.empresa || '-',
@@ -756,7 +756,7 @@
                 const key = telefone;
                 if (!mapa.has(key)) {
                     mapa.set(key, {
-                        nome: item.nome,
+                        nome: item.nome || 'Não identificado',
                         telefone: item.telefone,
                         cargo: item.cargo || '-',
                         empresa: item.empresa || '-',
@@ -777,7 +777,7 @@
                 const key = telefone;
                 if (!mapa.has(key)) {
                     mapa.set(key, {
-                        nome: item.nome,
+                        nome: item.nome || 'Não identificado',
                         telefone: item.telefone,
                         cargo: item.cargo || '-',
                         empresa: item.empresa || '-',
@@ -798,7 +798,7 @@
                 const key = telefone;
                 if (!mapa.has(key)) {
                     mapa.set(key, {
-                        nome: item.nome,
+                        nome: item.nome || 'Não identificado',
                         telefone: item.telefone,
                         cargo: item.cargo || '-',
                         empresa: item.empresa || '-',
@@ -841,7 +841,7 @@
                 const telefone = normalizarTelefone(item.telefone) || item.telefone;
                 const key = telefone;
                 mapa.set(key, {
-                    nome: item.nome,
+                    nome: item.nome || 'Não identificado',
                     telefone: item.telefone,
                     cargo: item.cargo || '-',
                     empresa: item.empresa || '-',
@@ -860,7 +860,7 @@
                 const telefone = normalizarTelefone(item.telefone) || item.telefone;
                 const key = telefone;
                 mapa.set(key, {
-                    nome: item.nome,
+                    nome: item.nome || 'Não identificado',
                     telefone: item.telefone,
                     cargo: item.cargo || '-',
                     empresa: item.empresa || '-',
@@ -922,6 +922,7 @@
     function getDadosFiltrados() {
         let dados = [...enviosDistintos];
 
+        // Filtro explícito para remover "Não identificado" apenas da exibição
         dados = dados.filter(item => item.nome !== 'Não identificado');
         
         if (filtroStatus !== 'all') {
@@ -991,7 +992,7 @@
         
         const tbody = document.getElementById('enviosTbody');
         if (paginaDados.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7">Nenhum registro encontrado.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7">Nenhum registro encontrado. nonexistent</td></tr>';
         } else {
             let html = '';
             for (let item of paginaDados) {
@@ -1199,9 +1200,11 @@
             const tableBody = document.querySelector('#statusTable tbody');
             tableBody.innerHTML = '';
             for (const [stat, total] of Object.entries(status)) {
-                const row = tableBody.insertRow();
-                row.insertCell(0).innerText = statusTraducao[stat] || stat;
-                row.insertCell(1).innerText = total;
+                if (stat !== 'undefined' && total !== null) {
+                    const row = tableBody.insertRow();
+                    row.insertCell(0).innerText = statusTraducao[stat] || stat;
+                    row.insertCell(1).innerText = total;
+                }
             }
             
             const filterStatusSelect = document.getElementById('filterStatus');
