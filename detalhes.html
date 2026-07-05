@@ -47,6 +47,9 @@
         .tel-button:hover { background-color: var(--secondary); text-decoration: none; transform: scale(1.02); }
         .tel-button:active { transform: scale(0.98); }
         footer { text-align: center; margin-top: 30px; font-size: 0.8em; color: #888; }
+        @media (max-width: 768px) {
+            .tables-container { flex-direction: column; }
+        }
     </style>
 </head>
 <body>
@@ -115,11 +118,16 @@
             dadosCompletos.lista_sim = resultado.lista_sim || [];
             dadosCompletos.lista_nao = resultado.lista_nao || [];
             dadosCarregados = true;
-            const atualizado = new Date().toLocaleString('pt-BR');
-            document.getElementById('last-update').innerHTML = `Última atualização: ${atualizado}`;
+            const ts = resultado.atualizado_em ? new Date(resultado.atualizado_em) : new Date();
+            document.getElementById('last-update').innerHTML = `Última atualização: ${ts.toLocaleString('pt-BR')}`;
             aplicarFiltro(currentStartDate, currentEndDate);
         } catch (error) {
             document.getElementById('last-update').innerHTML = 'Erro ao carregar dados';
+            const erroRow = '<tr><td colspan="5">Erro ao carregar. Tente novamente.</td></tr>';
+            const tbodySim = document.querySelector('#tableSim tbody');
+            const tbodyNao = document.querySelector('#tableNao tbody');
+            if (tbodySim) tbodySim.innerHTML = erroRow;
+            if (tbodyNao) tbodyNao.innerHTML = erroRow;
             console.error('Erro:', error);
         }
     }
@@ -140,7 +148,8 @@
         if (!start && !end) return lista;
         return lista.filter(item => {
             if (!item.respondido_em) return false;
-            const data = new Date(item.respondido_em);
+            const data = new Date(String(item.respondido_em).replace(' ', 'T'));
+            if (isNaN(data)) return false;
             if (start && data < start) return false;
             if (end && data > end) return false;
             return true;
@@ -176,9 +185,11 @@
         tbody.innerHTML = html;
     }
 
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, m => (m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;')));
+    function escapeHtml(value) {
+        if (value === null || value === undefined) return '';
+        return String(value).replace(/[&<>"']/g, function(m) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+        });
     }
 
     function setQuickFilter(tipo) {
@@ -189,8 +200,9 @@
         else if (tipo === '5d') { start = new Date(); start.setDate(now.getDate() - 5); start.setHours(0,0,0,0); }
         else if (tipo === '7d') { start = new Date(); start.setDate(now.getDate() - 7); start.setHours(0,0,0,0); }
         else if (tipo === '30d') { start = new Date(); start.setDate(now.getDate() - 30); start.setHours(0,0,0,0); }
-        if (start) document.getElementById('startDate').value = start.toISOString().split('T')[0];
-        document.getElementById('endDate').value = end.toISOString().split('T')[0];
+        const fmtInput = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        if (start) document.getElementById('startDate').value = fmtInput(start);
+        document.getElementById('endDate').value = fmtInput(end);
         aplicarFiltro(start, end);
     }
 

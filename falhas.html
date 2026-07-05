@@ -520,9 +520,17 @@
     };
 
     const explicacoesErros = {
-        "131049": { titulo: "Código 131049 - Limite de marketing atingido", explicacao: "<p><strong>Esta mensagem significa:</strong><br>O destinatário recebeu muitas mensagens de <strong>marketing</strong> nos últimos dias e o WhatsApp bloqueou temporariamente o envio.</p><p><strong>O que fazer:</strong><br>• Não reenvie imediatamente – espere pelo menos 24 horas.<br>• Considere usar templates de utilidade.</p>" },
-        "131026": { titulo: "Código 131026 - Mensagem não entregue (indisponível)", explicacao: "<p><strong>Esta mensagem significa:</strong><br>O número do destinatário pode estar inativo, não possui conta no WhatsApp ou o app está desatualizado.</p><p><strong>O que fazer:</strong><br>• Verifique se o número está correto.<br>• Tente enviar novamente após alguns dias.</p>" },
-        "131050": { titulo: "Código 131050 - Usuário cancelou inscrição", explicacao: "<p><strong>Esta mensagem significa:</strong><br>O destinatário optou por não receber mais mensagens de marketing da sua empresa.</p><p><strong>O que fazer:</strong><br>• Respeite a decisão e não envie mais mensagens de marketing para este contato.<br>• Mensagens de utilidade ainda podem ser enviadas se houver relação comercial.</p>" }
+        "131049": { titulo: "131049 — Limite de engajamento saudável (RETRY)", explicacao: "A Meta não entregou para preservar o engajamento saudável do usuário (muitas mensagens de marketing recentes). Classificado como RETRY: o fluxo reenvia mais tarde." },
+        "131000": { titulo: "131000 — Erro temporário (RETRY)", explicacao: "Falha genérica/temporária no envio. Classificado como RETRY: o fluxo tenta novamente automaticamente." },
+        "131005": { titulo: "131005 — Erro temporário (RETRY)", explicacao: "Falha temporária no processamento. Classificado como RETRY." },
+        "130429": { titulo: "130429 — Limite de taxa (RETRY)", explicacao: "Muitas mensagens em pouco tempo; a Meta limitou o envio. Classificado como RETRY: aguarda e reenvia." },
+        "500":    { titulo: "500 — Erro interno (RETRY)", explicacao: "Erro interno no envio. Classificado como RETRY." },
+        "131026": { titulo: "131026 — Sem WhatsApp (não reenviar)", explicacao: "O número não possui conta ativa no WhatsApp ou não pode receber a mensagem. Classificado como NÃO WHATSAPP: não reenviar." },
+        "130472": { titulo: "130472 — Usuário não elegível (não reenviar)", explicacao: "Número inelegível para receber (ex.: parte de experimento da Meta). Classificado como NÃO WHATSAPP: não reenviar." },
+        "131047": { titulo: "131047 — Reengajamento necessário (LGPD)", explicacao: "Passou da janela de 24h / requer reengajamento. Tratado como bloqueio (LGPD)." },
+        "131048": { titulo: "131048 — Restrição de envio (LGPD)", explicacao: "A Meta restringiu o envio ao destinatário. Tratado como bloqueio (LGPD)." },
+        "132000": { titulo: "132000 — Bloqueio de envio (LGPD)", explicacao: "Envio bloqueado por restrição da Meta. Tratado como bloqueio (LGPD)." },
+        "132001": { titulo: "132001 — Bloqueio de envio (LGPD)", explicacao: "Envio bloqueado por restrição da Meta. Tratado como bloqueio (LGPD)." }
     };
 
     function mostrarModal(codigo, mensagem) {
@@ -536,7 +544,7 @@
             modalBody.innerHTML = explicacao.explicacao;
         } else {
             modalTitle.innerText = `Código ${codigoStr} - Detalhes`;
-            modalBody.innerHTML = `<p><strong>Código ${codigoStr}</strong> - ${mensagem}</p><p>Consulte a documentação da Meta WhatsApp Business API.</p>`;
+            modalBody.innerHTML = `<p><strong>Código ${escapeHtml(codigoStr)}</strong> - ${escapeHtml(mensagem)}</p><p>Consulte a documentação da Meta WhatsApp Business API.</p>`;
         }
         modal.style.display = 'flex';
     }
@@ -571,7 +579,9 @@
 
     function escapeHtml(value) {
         if (value === null || value === undefined) return '';
-        return String(value).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]);
+        return String(value).replace(/[&<>"']/g, function(m) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+        });
     }
 
     function ordenarDados(dados, coluna, ordem, tipo) {
@@ -628,7 +638,7 @@
     function configurarOrdenacao(tabelaId, tipo) {
         const table = document.getElementById(tabelaId);
         if (!table) return;
-        const headers = table.querySelectorAll('th.sortable');
+        const headers = table.querySelectorAll('th[data-sort]');
         
         headers.forEach(header => {
             header.addEventListener('click', () => {
@@ -668,11 +678,20 @@
             dadosSemWhatsapp = resultado.lista_sem_whatsapp || [];
             
             dadosCarregados = true;
-            document.getElementById('last-update').innerHTML = `Última atualização: ${new Date().toLocaleString('pt-BR')}`;
-            
+            const dataAtualizacao = resultado.atualizado_em ? new Date(resultado.atualizado_em).toLocaleString('pt-BR') : new Date().toLocaleString('pt-BR');
+            document.getElementById('last-update').innerHTML = `Última atualização: ${dataAtualizacao}`;
+
             atualizarTodasTabelas();
         } catch (error) {
             document.getElementById('last-update').innerHTML = 'Erro ao carregar dados. Verifique a conexão.';
+            const tbodyFalhas = document.querySelector('#falhasTable tbody');
+            if (tbodyFalhas) tbodyFalhas.innerHTML = '<tr><td colspan="5">Erro ao carregar. Tente novamente.</td></tr>';
+            const tbodyLgpd = document.querySelector('#lgpdTable tbody');
+            if (tbodyLgpd) tbodyLgpd.innerHTML = '<tr><td colspan="5">Erro ao carregar. Tente novamente.</td></tr>';
+            const tbodyRetry = document.querySelector('#retryTable tbody');
+            if (tbodyRetry) tbodyRetry.innerHTML = '<tr><td colspan="6">Erro ao carregar. Tente novamente.</td></tr>';
+            const tbodySemWhatsapp = document.querySelector('#semWhatsappTable tbody');
+            if (tbodySemWhatsapp) tbodySemWhatsapp.innerHTML = '<tr><td colspan="6">Erro ao carregar. Tente novamente.</td></tr>';
             console.error('Erro:', error);
         }
     }
@@ -750,7 +769,7 @@
                 let telefoneNormalizado = normalizarTelefone(item.telefone);
                 const linkWhatsApp = telefoneNormalizado ? `https://wa.me/${telefoneNormalizado}?text=${encodeURIComponent(`Oi ${nomeExibido !== 'Não identificado' ? nomeExibido.split(' ')[0] : 'cliente'}, tudo bem?`)}` : '#';
                 const telefoneHtml = telefoneNormalizado ? `<a href="${linkWhatsApp}" target="_blank" class="tel-button">${escapeHtml(telefoneNormalizado)}</a>` : escapeHtml(item.telefone) || '-';
-                let dataHora = item.timestamp ? new Date(item.timestamp).toLocaleString('pt-BR') : '-';
+                let dataHora = formatarData(item.timestamp);
                 const codigoErro = escapeHtml(item.codigo_erro);
                 const mensagemErroOriginal = item.mensagem_erro || '';
                 const mensagemErroTruncada = truncarTexto(mensagemErroOriginal, 70);
@@ -808,7 +827,7 @@
         const tbody = document.querySelector('#retryTable tbody');
         
         if (paginaDados.length === 0) {
-            tbody.innerHTML = '</table><td colspan="6">Nenhuma retentativa bloqueada encontrada.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6">Nenhuma retentativa bloqueada encontrada.</td></tr>';
         } else {
             let html = '';
             for (let item of paginaDados) {
@@ -819,7 +838,7 @@
                     <td>${telefoneHtml}</td>
                     <td>${escapeHtml(item.cargo || '-')}</td>
                     <td>${escapeHtml(item.empresa || '-')}</td>
-                    <td><span class="pill" style="background:#17a2b8;">${item.envios_count || '3+'}</span></td>
+                    <td><span class="pill" style="background:#17a2b8;">${item.envios_count ?? '3+'}</span></td>
                     <td>${formatarData(item.bloqueio_em)}</td>
                 </tr>`;
             }
@@ -931,16 +950,11 @@
     function filtrarSemWhatsapp() { filtros.semwhatsapp.search = document.getElementById('searchSemWhatsapp').value.toLowerCase(); paginaAtual.semwhatsapp = 1; renderizarSemWhatsapp(); }
     function limparBuscaSemWhatsapp() { document.getElementById('searchSemWhatsapp').value = ''; filtros.semwhatsapp.search = ''; paginaAtual.semwhatsapp = 1; renderizarSemWhatsapp(); }
 
-    function atualizarTodasTabelas() { 
-        renderizarFalhas(); 
-        renderizarLgpd(); 
-        renderizarRetry(); 
-        renderizarSemWhatsapp(); 
-        
-        configurarOrdenacao('falhasTable', 'falhas');
-        configurarOrdenacao('lgpdTable', 'lgpd');
-        configurarOrdenacao('retryTable', 'retry');
-        configurarOrdenacao('semWhatsappTable', 'semwhatsapp');
+    function atualizarTodasTabelas() {
+        renderizarFalhas();
+        renderizarLgpd();
+        renderizarRetry();
+        renderizarSemWhatsapp();
     }
 
     document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => {
@@ -960,6 +974,12 @@
     window.onclick = function(event) { if (event.target === modal) fecharModal(); };
 
     document.getElementById('refreshBtn').addEventListener('click', () => carregarDados());
+
+    configurarOrdenacao('falhasTable', 'falhas');
+    configurarOrdenacao('lgpdTable', 'lgpd');
+    configurarOrdenacao('retryTable', 'retry');
+    configurarOrdenacao('semWhatsappTable', 'semwhatsapp');
+
     carregarDados();
 </script>
 </body>

@@ -261,6 +261,8 @@
         .category.marketing { background: #FF6B6B; color: white; }
         .category.utility { background: #4ECDC4; color: white; }
         .category.authentication { background: #45B7D1; color: white; }
+        .category.service { background: #FFD166; color: var(--text-dark); }
+        .category.default { background: #878787; color: white; }
         .loading { text-align: center; padding: 50px; color: #555; }
         @media (max-width: 900px) { 
             .charts-row { flex-direction: column; }
@@ -374,6 +376,14 @@
     const API_URL = 'https://testes-api-n8n-dev.nicehill-2119d736.brazilsouth.azurecontainerapps.io/webhook/nr1-dashboard-data';
     let chartCost, chartCategory, chartVolume;
 
+    const CAT_LABELS = { marketing: 'Marketing', utility: 'Utilidade', authentication: 'Autenticação', service: 'Serviço', desconhecido: 'Desconhecido' };
+    const CAT_COLORS = { marketing: '#FF6B6B', utility: '#4ECDC4', authentication: '#45B7D1', service: '#FFD166', desconhecido: '#878787' };
+    const KNOWN_CLASSES = ['marketing', 'utility', 'authentication', 'service'];
+
+    function formatBRL(v) { return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+    function catLabel(c) { return CAT_LABELS[c] || (c ? c.charAt(0).toUpperCase() + c.slice(1) : 'Desconhecido'); }
+    function catColor(c) { return CAT_COLORS[c] || '#878787'; }
+
     async function loadData() {
         try {
             const response = await fetch(API_URL);
@@ -381,7 +391,8 @@
             const data = await response.json();
             const custos = data.resultado.custos || { total_periodo: 0, por_categoria: {}, por_dia: [] };
             
-            document.getElementById('lastUpdate').innerText = new Date().toLocaleString('pt-BR');
+            const atualizado = data.resultado.atualizado_em ? new Date(data.resultado.atualizado_em) : new Date();
+            document.getElementById('lastUpdate').innerText = atualizado.toLocaleString('pt-BR');
             updateCards(custos);
             updateCharts(custos);
             updateTable(custos.por_dia || []);
@@ -395,75 +406,76 @@
     function updateCards(custos) {
         const total = custos.total_periodo || 0;
         const porCat = custos.por_categoria || {};
-        const html = `
+        const icons = { marketing: '📢', utility: '🔧', authentication: '🔐', service: '🛎️', desconhecido: '❓' };
+        let html = `
             <div class="card">
                 <div class="card-info-header">
                     <h3>💰 Custo Total (30 dias)</h3>
                     <button class="info-icon" onclick="openModal()" title="Como funciona a cobrança?">ⓘ</button>
                 </div>
-                <div class="value">R$ ${total.toFixed(2)}</div>
+                <div class="value">${formatBRL(total)}</div>
             </div>
-            <div class="card"><h3>📢 Marketing</h3><div class="value">R$ ${(porCat.marketing || 0).toFixed(2)}</div></div>
-            <div class="card"><h3>🔧 Utilidade</h3><div class="value">R$ ${(porCat.utility || 0).toFixed(2)}</div></div>
-            <div class="card"><h3>🔐 Autenticação</h3><div class="value">R$ ${(porCat.authentication || 0).toFixed(2)}</div></div>
         `;
+        Object.keys(porCat).forEach(cat => {
+            const icon = icons[cat] || '🏷️';
+            html += `<div class="card"><h3>${icon} ${catLabel(cat)}</h3><div class="value">${formatBRL(porCat[cat])}</div></div>`;
+        });
         document.getElementById('cards').innerHTML = html;
     }
 
     function updateCharts(custos) {
         const dias = custos.por_dia || [];
-        
+        const porCat = custos.por_categoria || {};
+        const cats = Object.keys(porCat);
+        const fmtDate = iso => new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+
         // Gráfico de linha (Evolução Diária)
         if (dias.length > 0) {
-            const labels = [...new Set(dias.map(d => d.data_referencia))].sort().reverse();
-            const marketing = labels.map(d => dias.find(x => x.data_referencia === d && x.categoria === 'marketing')?.custo_total || 0);
-            const utility = labels.map(d => dias.find(x => x.data_referencia === d && x.categoria === 'utility')?.custo_total || 0);
-            const auth = labels.map(d => dias.find(x => x.data_referencia === d && x.categoria === 'authentication')?.custo_total || 0);
+            const isoLabels = [...new Set(dias.map(d => d.data_referencia))].sort();
+            const labels = isoLabels.map(fmtDate);
+            const datasets = cats.map(cat => ({
+                label: catLabel(cat),
+                data: isoLabels.map(iso => dias.find(x => x.data_referencia === iso && x.categoria === cat)?.custo_total || 0),
+                borderColor: catColor(cat),
+                backgroundColor: catColor(cat) + '1a',
+                fill: true, tension: 0.3
+            }));
 
             if (chartCost) chartCost.destroy();
             const ctx = document.getElementById('costChart').getContext('2d');
-            chartCost = new Chart(ctx, { type: 'line', data: { labels, datasets: [
-                { label: 'Marketing', data: marketing, borderColor: '#FF6B6B', backgroundColor: 'rgba(255,107,107,0.1)', fill: true, tension: 0.3 },
-                { label: 'Utilidade', data: utility, borderColor: '#4ECDC4', backgroundColor: 'rgba(78,205,196,0.1)', fill: true, tension: 0.3 },
-                { label: 'Autenticação', data: auth, borderColor: '#45B7D1', backgroundColor: 'rgba(69,183,209,0.1)', fill: true, tension: 0.3 }
-            ]}, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } } } });
+            chartCost = new Chart(ctx, { type: 'line', data: { labels, datasets }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${formatBRL(c.raw)}` } } } } });
         }
 
         // Gráfico de pizza (Distribuição por Categoria) - reduzido
-        const porCat = custos.por_categoria || {};
         if (chartCategory) chartCategory.destroy();
         const ctx2 = document.getElementById('categoryChart').getContext('2d');
-        chartCategory = new Chart(ctx2, { type: 'doughnut', data: { 
-            labels: ['Marketing', 'Utilidade', 'Autenticação'], 
-            datasets: [{ data: [porCat.marketing || 0, porCat.utility || 0, porCat.authentication || 0], 
-                        backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1'],
-                        borderWidth: 0 }] 
-        }, options: { 
-            responsive: true, 
+        chartCategory = new Chart(ctx2, { type: 'doughnut', data: {
+            labels: cats.map(catLabel),
+            datasets: [{ data: cats.map(c => porCat[c] || 0),
+                        backgroundColor: cats.map(catColor),
+                        borderWidth: 0 }]
+        }, options: {
+            responsive: true,
             maintainAspectRatio: true,
-            plugins: { 
+            plugins: {
                 legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
-                tooltip: { callbacks: { label: (ctx) => `${ctx.label}: R$ ${ctx.raw.toFixed(2)}` } }
+                tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${formatBRL(ctx.raw)}` } }
             }
         } });
 
         // Gráfico de barras (Mensagens por Categoria)
         if (dias.length > 0) {
-            const labels = [...new Set(dias.map(d => d.data_referencia))].sort().reverse();
-            const volumes = { marketing: [], utility: [], authentication: [] };
-            labels.forEach(d => {
-                volumes.marketing.push(dias.find(x => x.data_referencia === d && x.categoria === 'marketing')?.quantidade || 0);
-                volumes.utility.push(dias.find(x => x.data_referencia === d && x.categoria === 'utility')?.quantidade || 0);
-                volumes.authentication.push(dias.find(x => x.data_referencia === d && x.categoria === 'authentication')?.quantidade || 0);
-            });
+            const isoLabels = [...new Set(dias.map(d => d.data_referencia))].sort();
+            const labels = isoLabels.map(fmtDate);
+            const datasets = cats.map(cat => ({
+                label: catLabel(cat),
+                data: isoLabels.map(iso => dias.find(x => x.data_referencia === iso && x.categoria === cat)?.quantidade || 0),
+                backgroundColor: catColor(cat), borderRadius: 4
+            }));
             if (chartVolume) chartVolume.destroy();
             const ctx3 = document.getElementById('volumeChart').getContext('2d');
-            chartVolume = new Chart(ctx3, { type: 'bar', data: { labels, datasets: [
-                { label: 'Marketing', data: volumes.marketing, backgroundColor: '#FF6B6B', borderRadius: 4 },
-                { label: 'Utilidade', data: volumes.utility, backgroundColor: '#4ECDC4', borderRadius: 4 },
-                { label: 'Autenticação', data: volumes.authentication, backgroundColor: '#45B7D1', borderRadius: 4 }
-            ]}, options: { responsive: true, maintainAspectRatio: true, 
-                scales: { x: { stacked: true, ticks: { maxRotation: 45, minRotation: 45 } }, 
+            chartVolume = new Chart(ctx3, { type: 'bar', data: { labels, datasets }, options: { responsive: true, maintainAspectRatio: true,
+                scales: { x: { stacked: true, ticks: { maxRotation: 45, minRotation: 45 } },
                           y: { stacked: true, title: { display: true, text: 'Quantidade de Mensagens' } } } } });
         }
     }
@@ -474,14 +486,18 @@
             tbody.innerHTML = '<tr><td colspan="4" class="loading">Nenhum dado de custo disponível</td></tr>';
             return;
         }
-        tbody.innerHTML = dados.map(d => `
+        tbody.innerHTML = dados.map(d => {
+            const cat = d.categoria || 'desconhecido';
+            const cls = KNOWN_CLASSES.includes(cat) ? cat : 'default';
+            return `
             <tr>
-                <td>${new Date(d.data_referencia).toLocaleDateString('pt-BR')}</td>
-                <td><span class="category ${d.categoria === 'marketing' ? 'marketing' : d.categoria === 'utility' ? 'utility' : 'authentication'}">${d.categoria || 'utility'}</span></td>
+                <td>${new Date(d.data_referencia + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                <td><span class="category ${cls}">${catLabel(cat)}</span></td>
                 <td>${(d.quantidade || 0).toLocaleString('pt-BR')}</td>
-                <td>R$ ${(d.custo_total || 0).toFixed(2)}</td>
+                <td>${formatBRL(d.custo_total)}</td>
             </tr>
-        `).join('');
+        `;
+        }).join('');
     }
 
     // Modal functions
@@ -516,7 +532,7 @@
     });
 
     loadData();
-    setInterval(loadData, 60000);
+    setInterval(() => { if (!document.hidden) { loadData(); } }, 300000);
 </script>
 </body>
 </html>
