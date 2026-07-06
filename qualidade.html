@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <title>Qualidade & Saúde — Campanha NR1</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #FFCB05; --primary-hover: #D4A800; --secondary: #231F20;
+            --neutral: #878787; --bg: #F5F5F5; --text-dark: #231F20; --text-light: #FFFFFF;
+            --ok: #2E8B57; --warn: #C77700; --bad: #C0392B;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: var(--bg); padding: 20px; color: var(--text-dark); }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header-flex { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 10px; }
+        .header-flex h1 { margin: 0; font-size: 1.5em; }
+        .nav-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+        .nav-buttons a { display: inline-block; background: var(--primary); color: var(--text-dark); padding: 8px 16px; text-decoration: none; border-radius: 8px; font-weight: bold; transition: background 0.2s; }
+        .nav-buttons a:hover { background: var(--primary-hover); }
+        .nav-buttons a.dark { background: var(--secondary); color: var(--text-light); }
+        .update-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 20px; }
+        .last-update { color: var(--neutral); font-size: 0.9em; }
+        .refresh-buttons button { background: var(--neutral); color: white; padding: 6px 12px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.85em; }
+        .refresh-buttons button:hover { background: #6E6E6E; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .card { background: white; padding: 18px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; }
+        .card h3 { font-size: 0.82em; color: #555; margin-bottom: 8px; font-weight: 600; }
+        .card .number { font-size: 2em; font-weight: bold; color: #1a1a2e; }
+        .card .sub { font-size: 0.75em; color: var(--neutral); margin-top: 4px; }
+        .card.accent { border-top: 4px solid var(--primary); }
+        .charts-row { display: flex; flex-wrap: wrap; gap: 24px; margin-bottom: 24px; }
+        .chart-box { flex: 1; min-width: 320px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .chart-box h2 { font-size: 1.1em; margin-bottom: 15px; border-left: 4px solid var(--primary); padding-left: 10px; }
+        canvas { max-height: 320px; width: 100% !important; }
+        .alert { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 18px 20px; margin-bottom: 24px; border-left: 5px solid var(--warn); }
+        .alert h2 { font-size: 1.05em; margin-bottom: 8px; }
+        .alert ul { margin: 8px 0 0 18px; font-size: 0.9em; line-height: 1.5; }
+        .alert .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.75em; font-weight: bold; }
+        .pill.ok { background: #e5f3ec; color: var(--ok); }
+        .pill.warn { background: #fbf0df; color: var(--warn); }
+        .pill.bad { background: #f7e2df; color: var(--bad); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.88em; }
+        th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #eee; }
+        th { color: #555; font-weight: 600; }
+        td.num { text-align: right; font-variant-numeric: tabular-nums; }
+        .loading, .error { text-align: center; padding: 40px; color: var(--neutral); }
+        .error { color: var(--bad); }
+        .footnote { color: var(--neutral); font-size: 0.78em; margin-top: 8px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header-flex">
+        <h1>📈 Qualidade &amp; Saúde da Campanha</h1>
+        <div class="nav-buttons">
+            <a href="index.html">🏠 Visão geral</a>
+            <a href="falhas.html">⚠️ Falhas</a>
+            <a href="custo_envio_mensagem.html" class="dark">💰 Custos</a>
+        </div>
+    </div>
+    <div class="update-row">
+        <span class="last-update" id="lastUpdate">Carregando…</span>
+        <div class="refresh-buttons"><button onclick="carregar()">🔄 Atualizar</button></div>
+    </div>
+
+    <div id="conteudo">
+        <div class="loading">Carregando métricas de qualidade…</div>
+    </div>
+    <p class="footnote">Fonte: endpoint público <code>nr1-quality-data</code> — apenas métricas agregadas, sem dados pessoais. Janela: últimos 30 dias.</p>
+</div>
+
+<script>
+const API_URL = 'https://testes-api-n8n-dev.nicehill-2119d736.brazilsouth.azurecontainerapps.io/webhook/nr1-quality-data';
+let chartTendencia, chartErros;
+
+function n(v){ return (v||0).toLocaleString('pt-BR'); }
+function pct(part, total){ return total > 0 ? (100 * part / total) : 0; }
+function fmtPct(v){ return v.toFixed(1).replace('.', ',') + '%'; }
+
+function carregar(){
+    document.getElementById('conteudo').innerHTML = '<div class="loading">Carregando…</div>';
+    fetch(API_URL)
+        .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(raw => {
+            const row = Array.isArray(raw) ? raw[0] : raw;
+            const q = row.resultado || row;
+            render(q);
+        })
+        .catch(e => {
+            document.getElementById('conteudo').innerHTML =
+                '<div class="error">Não foi possível carregar as métricas: ' + e.message + '</div>';
+            document.getElementById('lastUpdate').textContent = 'Falha ao atualizar';
+        });
+}
+
+function render(q){
+    const base = q.base || {};
+    const dias = q.por_dia || [];
+    const erros = q.erros_por_codigo || [];
+
+    // Totais 30 dias
+    const tot = dias.reduce((a,d)=>({
+        enviados:a.enviados+ +d.enviados, entregues:a.entregues+ +d.entregues,
+        lidos:a.lidos+ +d.lidos, falhas:a.falhas+ +d.falhas
+    }), {enviados:0,entregues:0,lidos:0,falhas:0});
+    const totalTentativas = tot.enviados + tot.falhas;
+    const taxaFalha = pct(tot.falhas, totalTentativas);
+    const taxaEntrega = pct(tot.entregues, tot.enviados);
+    const taxaLeitura = pct(tot.lidos, tot.enviados);
+
+    // Semáforo pela taxa de falha
+    let saude = {cls:'ok', txt:'Saudável'};
+    if (taxaFalha >= 50) saude = {cls:'bad', txt:'Crítica'};
+    else if (taxaFalha >= 25) saude = {cls:'warn', txt:'Atenção'};
+
+    const invalidos = erros.filter(e => ['131026','130472'].includes(String(e.codigo))).reduce((a,e)=>a+ +e.qtd,0);
+    const pacing = erros.filter(e => String(e.codigo)==='131049').reduce((a,e)=>a+ +e.qtd,0);
+    const pagamento = erros.filter(e => String(e.codigo)==='131042').reduce((a,e)=>a+ +e.qtd,0);
+
+    const cards = `
+      <div class="cards">
+        <div class="card accent"><h3>TAXA DE FALHA (30d)</h3><div class="number">${fmtPct(taxaFalha)}</div><div class="sub"><span class="pill ${saude.cls}">${saude.txt}</span></div></div>
+        <div class="card"><h3>ENTREGUES / ENVIADOS</h3><div class="number">${fmtPct(taxaEntrega)}</div><div class="sub">${n(tot.entregues)} de ${n(tot.enviados)}</div></div>
+        <div class="card"><h3>LIDOS / ENVIADOS</h3><div class="number">${fmtPct(taxaLeitura)}</div><div class="sub">${n(tot.lidos)} lidos</div></div>
+        <div class="card"><h3>ELEGÍVEIS NA FILA</h3><div class="number">${n(base.elegiveis)}</div><div class="sub">de ${n(base.total)} contatos</div></div>
+        <div class="card"><h3>NÃO-WHATSAPP (mortos)</h3><div class="number">${n(base.nao_whatsapp)}</div><div class="sub">números inválidos</div></div>
+        <div class="card"><h3>EM DESCANSO (131049)</h3><div class="number">${n(base.descanso)}</div><div class="sub">retornam em 30 dias</div></div>
+        <div class="card"><h3>RESPONDERAM SIM</h3><div class="number">${n(base.respondeu_sim)}</div><div class="sub">${n(base.respondeu_nao)} responderam não</div></div>
+      </div>`;
+
+    const alerta = `
+      <div class="alert">
+        <h2>🩺 Leitura de saúde &amp; recuperação</h2>
+        <p>A maior fonte de falha é <b>número inválido</b> (131026/130472): <b>${n(invalidos)}</b> em 30 dias — o gargalo é <b>qualidade da lista</b>, não reputação. Pacing da Meta (131049): <b>${n(pacing)}</b>.</p>
+        ${pagamento>0 ? `<p style="margin-top:8px"><span class="pill bad">Atenção</span> <b>${n(pagamento)}</b> falhas por <b>elegibilidade de pagamento</b> (131042) — confira o método de pagamento da conta no Meta Business.</p>` : ''}
+        <ul>
+          <li><b>Higiene:</b> os ${n(base.nao_whatsapp)} não-WhatsApp já estão fora da fila (mortos, apenas listados).</li>
+          <li><b>Descanso:</b> ${n(base.descanso)} números de pacing voltam automaticamente após 30 dias.</li>
+          <li><b>Retomada:</b> reativar em volume baixo, só com os mais engajados, e subir aos poucos monitorando esta taxa de falha.</li>
+        </ul>
+      </div>`;
+
+    const tabelaErros = `
+      <div class="chart-box" style="flex-basis:100%">
+        <h2>Falhas por código de erro (30 dias)</h2>
+        <table>
+          <thead><tr><th>Código</th><th>Descrição</th><th class="num">Qtd</th><th class="num">%</th></tr></thead>
+          <tbody>
+            ${erros.map(e=>`<tr><td>${e.codigo}</td><td>${(e.titulo||'').replace(/</g,'&lt;')}</td><td class="num">${n(+e.qtd)}</td><td class="num">${fmtPct(pct(+e.qtd, tot.falhas))}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+
+    document.getElementById('conteudo').innerHTML = cards + alerta + `
+      <div class="charts-row">
+        <div class="chart-box"><h2>Tendência diária (envios × falhas)</h2><canvas id="cTend"></canvas></div>
+      </div>
+      <div class="charts-row">${tabelaErros}</div>`;
+
+    // Chart tendência
+    const labels = dias.map(d => { const p=String(d.dia).slice(5); return p; });
+    if (chartTendencia) chartTendencia.destroy();
+    chartTendencia = new Chart(document.getElementById('cTend'), {
+        type: 'line',
+        data: { labels, datasets: [
+            { label:'Enviados', data: dias.map(d=>+d.enviados), borderColor:'#2E8B57', backgroundColor:'rgba(46,139,87,.1)', tension:.3, fill:true },
+            { label:'Entregues', data: dias.map(d=>+d.entregues), borderColor:'#2C7BE5', backgroundColor:'transparent', tension:.3 },
+            { label:'Lidos', data: dias.map(d=>+d.lidos), borderColor:'#8E44AD', backgroundColor:'transparent', tension:.3 },
+            { label:'Falhas', data: dias.map(d=>+d.falhas), borderColor:'#C0392B', backgroundColor:'rgba(192,57,43,.1)', tension:.3, fill:true },
+        ]},
+        options: { responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
+            plugins:{ legend:{position:'bottom'} }, scales:{ y:{ beginAtZero:true } } }
+    });
+
+    const dt = q.atualizado_em ? new Date(q.atualizado_em) : null;
+    document.getElementById('lastUpdate').textContent = 'Última atualização: ' +
+        (dt ? dt.toLocaleString('pt-BR') : '—');
+}
+
+carregar();
+setInterval(carregar, 5 * 60 * 1000); // auto-refresh 5 min
+</script>
+</body>
+</html>
