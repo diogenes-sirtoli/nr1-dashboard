@@ -1,24 +1,16 @@
 // Cloudflare Pages Function — proxy autenticado para o webhook de dados do dashboard.
 //
-// Fica em nr1.gobeesiness.com/api/dashboard-data. Toda a zona nr1.gobeesiness.com
-// deve estar protegida por Cloudflare Access, então esta função só executa para
-// usuários já autenticados pelo time. Ela injeta o token do n8n (guardado como
-// secret/variável de ambiente DASHBOARD_API_TOKEN), que NUNCA aparece no navegador.
-//
-// Defesa extra: se o cabeçalho do Access não estiver presente, recusa (evita que
-// alguém chame a rota fora do fluxo do Access).
+// Fica em nr1.gobeesiness.com/api/dashboard-data. O acesso é gateado pelo
+// functions/_middleware.js (HTTP Basic Auth), que roda ANTES desta função em toda
+// rota do projeto. Portanto, se chegou aqui, o usuário já passou pela autenticação.
+// Esta função injeta o token do n8n (guardado como secret/variável de ambiente
+// DASHBOARD_API_TOKEN), que NUNCA aparece no navegador.
 
 const UPSTREAM =
   'https://testes-api-n8n-dev.nicehill-2119d736.brazilsouth.azurecontainerapps.io/webhook/nr1-dashboard-data';
 
 export async function onRequestGet(context) {
-  const { env, request } = context;
-
-  // Só permite se veio pelo Cloudflare Access (cabeçalho injetado pelo Access).
-  const accessJwt = request.headers.get('Cf-Access-Jwt-Assertion');
-  if (!accessJwt) {
-    return json({ error: 'unauthorized' }, 401);
-  }
+  const { env } = context;
 
   const token = env.DASHBOARD_API_TOKEN;
   if (!token) {
