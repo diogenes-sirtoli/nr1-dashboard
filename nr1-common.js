@@ -39,11 +39,12 @@ function formatarData(dataISO) {
 }
 
 // Dicionário canônico dos códigos de erro da Meta, alinhado à classificação do
-// backend: RETRY=[130429,131000,131005,500,131049] · NAO_WHATSAPP=[131026,130472]
+// backend: RETRY=[130429,131000,131005,500] · DESCANSO=[131049] · NAO_WHATSAPP=[131026,130472]
 // · LGPD=[131047,131048,132000,132001]. Mantê-lo aqui evita que index/falhas divirjam.
 const explicacoesErros = {
+    // DESCANSO — pacing/throttling da Meta; o número sai da fila e volta sozinho após 30 dias
+    "131049": { titulo: "131049 — Limite de engajamento saudável (DESCANSO)", explicacao: "A Meta não entregou para preservar o engajamento saudável do usuário (pacing por muitas mensagens de marketing recentes). Classificado como DESCANSO: o número sai da fila e retorna automaticamente após 30 dias." },
     // RETRY — bloqueio temporário; o fluxo reenvia automaticamente depois
-    "131049": { titulo: "131049 — Limite de engajamento saudável (RETRY)", explicacao: "A Meta não entregou para preservar o engajamento saudável do usuário (muitas mensagens de marketing recentes). Classificado como RETRY: o fluxo reenvia mais tarde." },
     "131000": { titulo: "131000 — Erro temporário (RETRY)", explicacao: "Falha genérica/temporária no envio. Classificado como RETRY: o fluxo tenta novamente automaticamente." },
     "131005": { titulo: "131005 — Erro temporário (RETRY)", explicacao: "Falha temporária no processamento. Classificado como RETRY." },
     "130429": { titulo: "130429 — Limite de taxa (RETRY)", explicacao: "Muitas mensagens em pouco tempo; a Meta limitou o envio. Classificado como RETRY: aguarda e reenvia." },

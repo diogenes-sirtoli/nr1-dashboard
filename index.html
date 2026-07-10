@@ -1172,8 +1172,7 @@
             processarDadosDistintos(resultado);
             processarEvolucaoStatusMensagens(resultado);
             renderizarEnvios();
-            configurarOrdenacao();
-            
+
             const status = resultado.status_mensagens || {};
             const tableBody = document.querySelector('#statusTable tbody');
             tableBody.innerHTML = '';
@@ -1201,6 +1200,7 @@
     }
     
     document.getElementById('refreshBtn').addEventListener('click', () => loadData());
+    configurarOrdenacao(); // uma vez só — cabeçalhos são estáticos (evita listeners duplicados a cada refresh)
     loadData();
 </script>
 </body>
