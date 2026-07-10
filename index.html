@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <title>Dashboard NR1 - Campanha WhatsApp</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="chart.umd.min.js"></script>
     <style>
         :root {
             --primary: #FFCB05;
@@ -742,7 +742,7 @@
                         empresa: item.empresa || '-',
                         status: 'retry',
                         data: item.bloqueio_em,
-                        detalhes: `${item.envios_count || 'Múltiplas'} tentativa(s) sem sucesso`,
+                        detalhes: `${escapeHtml(item.envios_count || 'Múltiplas')} tentativa(s) sem sucesso`,
                         prioridade: 2
                     });
                 }
@@ -844,7 +844,7 @@
                         data: item.timestamp,
                         codigo_erro: item.codigo_erro,
                         mensagem_erro: item.mensagem_erro,
-                        detalhes: `<span class="error-code" onclick="mostrarModal('${item.codigo_erro}', '${escapeHtml(item.mensagem_erro || '').replace(/'/g, "\\'")}')">⚠️ Código ${item.codigo_erro}</span>`,
+                        detalhes: `<span class="error-code" onclick="mostrarModal('${escapeHtml(item.codigo_erro)}', '${escapeHtml(item.mensagem_erro || '').replace(/'/g, "\\'")}')">⚠️ Código ${escapeHtml(item.codigo_erro)}</span>`,
                         prioridade: 2
                     });
                 }
@@ -863,7 +863,7 @@
                     empresa: item.empresa || '-',
                     status: 'nao',
                     data: item.respondido_em,
-                    detalhes: `Respondeu NÃO - Template: ${item.template_enviado || 'N/A'}`,
+                    detalhes: `Respondeu NÃO - Template: ${escapeHtml(item.template_enviado || 'N/A')}`,
                     prioridade: 3
                 });
             });
@@ -881,7 +881,7 @@
                     empresa: item.empresa || '-',
                     status: 'sim',
                     data: item.respondido_em,
-                    detalhes: `Respondeu SIM - Template: ${item.template_enviado || 'N/A'}`,
+                    detalhes: `Respondeu SIM - Template: ${escapeHtml(item.template_enviado || 'N/A')}`,
                     prioridade: 4
                 });
             });
