@@ -680,19 +680,9 @@
     function processarDadosDistintos(resultado) {
         const mapa = new Map();
         
-        console.log('=== DEBUG: Listas recebidas ===');
-        console.log('lista_read:', resultado.lista_read ? resultado.lista_read.length : 'undefined');
-        console.log('lista_sim:', resultado.lista_sim ? resultado.lista_sim.length : 'undefined');
-        console.log('lista_nao:', resultado.lista_nao ? resultado.lista_nao.length : 'undefined');
-        console.log('lista_enviados:', resultado.lista_enviados ? resultado.lista_enviados.length : 'undefined');
-        console.log('lista_falhas:', resultado.lista_falhas ? resultado.lista_falhas.length : 'undefined');
-        console.log('lista_retry:', resultado.lista_retry ? resultado.lista_retry.length : 'undefined');
-        console.log('lista_lgpd:', resultado.lista_lgpd ? resultado.lista_lgpd.length : 'undefined');
-        console.log('lista_sem_whatsapp:', resultado.lista_sem_whatsapp ? resultado.lista_sem_whatsapp.length : 'undefined');
         
         // 1. LIDAS (READ) - PRIORIDADE MAIS BAIXA
         if (resultado.lista_read && Array.isArray(resultado.lista_read) && resultado.lista_read.length > 0) {
-            console.log('Processando', resultado.lista_read.length, 'registros de leitura');
             resultado.lista_read.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone) || item.telefone;
                 const key = telefone;
@@ -713,7 +703,6 @@
         
         // 2. AGUARDANDO RESPOSTA (ENVIADOS)
         if (resultado.lista_enviados && Array.isArray(resultado.lista_enviados) && resultado.lista_enviados.length > 0) {
-            console.log('Processando', resultado.lista_enviados.length, 'registros de enviados');
             resultado.lista_enviados.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone) || item.telefone;
                 const key = telefone;
@@ -734,7 +723,6 @@
         
         // 3. BLOQUEIOS RETRY
         if (resultado.lista_retry && Array.isArray(resultado.lista_retry) && resultado.lista_retry.length > 0) {
-            console.log('Processando', resultado.lista_retry.length, 'registros de RETRY');
             resultado.lista_retry.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone) || item.telefone;
                 const key = telefone;
@@ -755,7 +743,6 @@
         
         // 4. BLOQUEIOS LGPD
         if (resultado.lista_lgpd && Array.isArray(resultado.lista_lgpd) && resultado.lista_lgpd.length > 0) {
-            console.log('Processando', resultado.lista_lgpd.length, 'registros de LGPD');
             resultado.lista_lgpd.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone) || item.telefone;
                 const key = telefone;
@@ -776,7 +763,6 @@
         
         // 5. SEM WHATSAPP
         if (resultado.lista_sem_whatsapp && Array.isArray(resultado.lista_sem_whatsapp) && resultado.lista_sem_whatsapp.length > 0) {
-            console.log('Processando', resultado.lista_sem_whatsapp.length, 'registros de Sem WhatsApp');
             resultado.lista_sem_whatsapp.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone) || item.telefone;
                 const key = telefone;
@@ -797,7 +783,6 @@
         
         // 6. FALHAS (FAILED)
         if (resultado.lista_falhas && Array.isArray(resultado.lista_falhas) && resultado.lista_falhas.length > 0) {
-            console.log('Processando', resultado.lista_falhas.length, 'registros de Falhas');
             resultado.lista_falhas.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone) || item.telefone;
                 const key = telefone;
@@ -820,7 +805,6 @@
         
         // 7. RESPOSTAS NÃO - PRIORIDADE ALTA
         if (resultado.lista_nao && Array.isArray(resultado.lista_nao) && resultado.lista_nao.length > 0) {
-            console.log('Processando', resultado.lista_nao.length, 'registros de Respostas NÃO');
             resultado.lista_nao.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone) || item.telefone;
                 const key = telefone;
@@ -839,7 +823,6 @@
         
         // 8. RESPOSTAS SIM - PRIORIDADE MAIS ALTA
         if (resultado.lista_sim && Array.isArray(resultado.lista_sim) && resultado.lista_sim.length > 0) {
-            console.log('Processando', resultado.lista_sim.length, 'registros de Respostas SIM');
             resultado.lista_sim.forEach(item => {
                 const telefone = normalizarTelefone(item.telefone) || item.telefone;
                 const key = telefone;
@@ -857,14 +840,12 @@
         }
         
         enviosDistintos = Array.from(mapa.values());
-        console.log('Total de contatos distintos:', enviosDistintos.length);
         
         // Estatísticas por status
         const statusCount = {};
         enviosDistintos.forEach(item => {
             statusCount[item.status] = (statusCount[item.status] || 0) + 1;
         });
-        console.log('Status counts:', statusCount);
     }
     
     function ordenarDados(dados) {
@@ -1116,15 +1097,12 @@
     
     async function loadData() {
         try {
-            console.log('Carregando dados da API...');
             const response = await fetch(API_URL);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
-            console.log('Dados recebidos (primeiros níveis):', Object.keys(data));
             
             const resultado = data.resultado || data;
             ultimoResultado = resultado; // cache p/ redesenhar gráficos sem refetch
-            console.log('Resultado (primeiros níveis):', Object.keys(resultado));
 
             if (resultado.atualizado_em) {
                 document.getElementById('last-update').innerHTML = `Última atualização: ${new Date(resultado.atualizado_em).toLocaleString('pt-BR')}`;
