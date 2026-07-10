@@ -192,6 +192,8 @@
         .status-badge.retry { background: #17a2b8; color: white; }
         .status-badge.lgpd { background: #6c757d; color: white; }
         .status-badge.semwhatsapp { background: #fd7e14; color: white; }
+        .status-badge.descanso { background: #6c5ce7; color: white; }
+        .status-badge.telinvalido { background: #a4133c; color: white; }
         .status-badge.enviado { background: #17a2b8; color: white; }
         .status-badge.read { background: #8e44ad; color: white; }
         .error-code {
@@ -400,6 +402,8 @@
                     <option value="read">👁️ Lidas</option>
                     <option value="falha">⚠️ Falha no envio</option>
                     <option value="retry">🔄 Bloqueio (RETRY)</option>
+                    <option value="descanso">😴 Em descanso (30d)</option>
+                    <option value="telinvalido">🚫 Telefone inválido</option>
                     <option value="lgpd">🔒 Bloqueio LGPD</option>
                     <option value="semwhatsapp">📵 Sem WhatsApp</option>
                 </select>
@@ -504,6 +508,8 @@
             'nao': '<span class="status-badge nao">❌ NÃO</span>',
             'falha': '<span class="status-badge falha">⚠️ Falha</span>',
             'retry': '<span class="status-badge retry">🔄 Bloqueio (RETRY)</span>',
+            'descanso': '<span class="status-badge descanso">😴 Descanso (30d)</span>',
+            'telinvalido': '<span class="status-badge telinvalido">🚫 Telefone inválido</span>',
             'lgpd': '<span class="status-badge lgpd">🔒 Bloqueio LGPD</span>',
             'semwhatsapp': '<span class="status-badge semwhatsapp">📵 Sem WhatsApp</span>',
             'enviado': '<span class="status-badge enviado" style="background:#17a2b8; color:white;">📨 Aguardando resposta</span>',
@@ -515,6 +521,8 @@
     function getTipoContato(item) {
         if (item.status === 'falha') return 'Falha no envio';
         if (item.status === 'retry') return 'Bloqueio (RETRY)';
+        if (item.status === 'descanso') return 'Em descanso (30 dias)';
+        if (item.status === 'telinvalido') return 'Telefone inválido';
         if (item.status === 'lgpd') return 'Bloqueio LGPD';
         if (item.status === 'semwhatsapp') return 'Sem WhatsApp';
         if (item.status === 'enviado') return 'Aguardando resposta';
@@ -741,6 +749,46 @@
             });
         }
         
+        // 3b. DESCANSO (pacing Meta 131049 — volta à fila em 30 dias)
+        if (resultado.lista_descanso && Array.isArray(resultado.lista_descanso) && resultado.lista_descanso.length > 0) {
+            resultado.lista_descanso.forEach(item => {
+                const telefone = normalizarTelefone(item.telefone) || item.telefone;
+                const key = telefone;
+                if (!mapa.has(key)) {
+                    mapa.set(key, {
+                        nome: item.nome || 'Não identificado',
+                        telefone: item.telefone,
+                        cargo: item.cargo || '-',
+                        empresa: item.empresa || '-',
+                        status: 'descanso',
+                        data: item.bloqueio_em,
+                        detalhes: 'Em descanso (pacing Meta 131049) — retorna à fila em 30 dias',
+                        prioridade: 2
+                    });
+                }
+            });
+        }
+
+        // 3c. TELEFONE INVÁLIDO (formato inválido — fora da fila)
+        if (resultado.lista_telefone_invalido && Array.isArray(resultado.lista_telefone_invalido) && resultado.lista_telefone_invalido.length > 0) {
+            resultado.lista_telefone_invalido.forEach(item => {
+                const telefone = normalizarTelefone(item.telefone) || item.telefone;
+                const key = telefone;
+                if (!mapa.has(key)) {
+                    mapa.set(key, {
+                        nome: item.nome || 'Não identificado',
+                        telefone: item.telefone,
+                        cargo: item.cargo || '-',
+                        empresa: item.empresa || '-',
+                        status: 'telinvalido',
+                        data: item.bloqueio_em,
+                        detalhes: 'Telefone com formato inválido — fora da fila de envio',
+                        prioridade: 2
+                    });
+                }
+            });
+        }
+
         // 4. BLOQUEIOS LGPD
         if (resultado.lista_lgpd && Array.isArray(resultado.lista_lgpd) && resultado.lista_lgpd.length > 0) {
             resultado.lista_lgpd.forEach(item => {
@@ -925,6 +973,8 @@
             'enviado': '📨 Aguardando resposta',
             'falha': '⚠️ Falhas',
             'retry': '🔄 RETRY',
+            'descanso': '😴 Descanso',
+            'telinvalido': '🚫 Tel. inválido',
             'lgpd': '🔒 LGPD',
             'semwhatsapp': '📵 Sem WhatsApp'
         };
